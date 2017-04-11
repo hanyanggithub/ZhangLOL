@@ -1,0 +1,38 @@
+//
+//  PrefixHeader.pch
+//  ZhangLOL
+//
+//  Created by mac on 17/4/3.
+//  Copyright © 2017年 rengukeji. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+
+#import <UIImageView+WebCache.h>
+#import <Masonry.h>
+#import <SWRevealViewController.h>
+
+#import "ZhangLOLNetwork.h"
+#import "Api.h"
+#import "UIView+Extension.h"
+#import "UIScrollView+Extension.h"
+#import "ImageBlur.h"
+
+
+#define MAIN_COLOR  [ImageBlur getImagePixelColorWithPoint:[UIImage imageNamed:@"login_btn_qq_icon_normal"] point:CGPointMake(8, 8)]
+
+#define SCREEN_WIDTH ([UIScreen mainScreen].bounds.size.width)
+#define SCREEN_HEIGHT ([UIScreen mainScreen].bounds.size.height)
+#define SCREEN_SCALE (SCREEN_WIDTH / 375.0)
+#define TABBAR_HEIGHT 44.0
+#define NAVIBAR_HEIGHT 64.0
+#define RECOMMEND_VIEW_HEIGHT 200
+
+
+#endif /* PrefixHeader_pch */
