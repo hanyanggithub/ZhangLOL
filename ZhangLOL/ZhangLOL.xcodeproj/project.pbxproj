@@ -308,14 +308,14 @@
 		04414A091E94E8AD0079D027 /* newest */ = {
 			isa = PBXGroup;
 			children = (
-				040CF9E71E9286C300B003D5 /* HoverView.h */,
-				040CF9E81E9286C300B003D5 /* HoverView.m */,
-				0405D6771E98E9F0002D1622 /* LiveGamesView.h */,
-				0405D6781E98E9F0002D1622 /* LiveGamesView.m */,
 				04414A0A1E94E9210079D027 /* NewestTableView.h */,
 				04414A0B1E94E9210079D027 /* NewestTableView.m */,
 				0405D67A1E98EA0E002D1622 /* NewestTableHeaderView.h */,
 				0405D67B1E98EA0E002D1622 /* NewestTableHeaderView.m */,
+				040CF9E71E9286C300B003D5 /* HoverView.h */,
+				040CF9E81E9286C300B003D5 /* HoverView.m */,
+				0405D6771E98E9F0002D1622 /* LiveGamesView.h */,
+				0405D6781E98E9F0002D1622 /* LiveGamesView.m */,
 			);
 			name = newest;
 			sourceTree = "<group>";

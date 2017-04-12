@@ -7,6 +7,8 @@
 //
 
 #import "NewestTableHeaderView.h"
+#import "HoverView.h"
+#import "LiveGamesView.h"
 
 @implementation NewestTableHeaderView
 

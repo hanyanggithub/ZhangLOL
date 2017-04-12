@@ -118,7 +118,7 @@
     for (int i = 0; i < array.count; i++) {
         RencommendModel *model = array[i];
         UIImageView *imageView = self.imagesViews[i];
-        [imageView sd_setImageWithURL:[NSURL URLWithString:model.image_url_big] placeholderImage:[UIImage imageNamed:@"hero_detail_head_default"] options:SDWebImageCacheMemoryOnly];
+        [imageView sd_setImageWithURL:[NSURL URLWithString:model.image_url_big] placeholderImage:[UIImage imageNamed:@"hero_detail_head_default"] options:SDWebImageProgressiveDownload];
     }
     self.scrollView.contentOffset = CGPointMake(self.scrollView.width, 0);
     [self.pageControll setIndex:0];
@@ -128,7 +128,11 @@
 
 - (UIImage *)getCurrentShowImage {
     RencommendModel *model = self.models[self.currentIndex];
-    UIImage *image = [[SDImageCache sharedImageCache] imageFromMemoryCacheForKey:model.image_url_big];
+    UIImage *image = nil;
+    image = [[SDImageCache sharedImageCache] imageFromMemoryCacheForKey:model.image_url_big];
+    if (image == nil) {
+        image = [[SDImageCache sharedImageCache] imageFromDiskCacheForKey:model.image_url_big];
+    }
     return image;
 }
 - (void)tapImageViewAction:(UITapGestureRecognizer *)tap {

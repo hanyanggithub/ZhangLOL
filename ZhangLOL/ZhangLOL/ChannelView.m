@@ -31,6 +31,7 @@
         self.scrollView.showsHorizontalScrollIndicator = NO;
         [self addSubview:self.scrollView];
         self.indicator = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"tab_selected"]];
+        self.indicator.hidden = YES;
         [self.scrollView addSubview:self.indicator];
     }
     return self;
@@ -77,6 +78,7 @@
     // 设置indicator
     UILabel *label = [self.labels firstObject];
     self.indicator.frame = CGRectMake(label.left, label.bottom, label.width, label.width/78.0 *11.0);
+    self.indicator.hidden = NO;
     [self.scrollView bringSubviewToFront:self.indicator];
     
 }
@@ -128,5 +130,8 @@
         self.userInteractionEnabled = YES;
     }];
     self.currentIndex = index;
+}
+- (NSInteger)channelCount {
+    return  self.labels.count;
 }
 @end

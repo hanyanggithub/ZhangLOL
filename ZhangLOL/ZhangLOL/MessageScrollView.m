@@ -62,17 +62,7 @@
 - (void)updateTableViewsWithModels:(NSArray *)models index:(NSInteger)index info:(NSDictionary *)info {
     if (index < self.tableViews.count) {
         BaseTableView *tableView = self.tableViews[index];
-        switch (index) {
-            case 0:
-                [tableView updateWithChannelModels:models];
-                break;
-            case 1:
-                tableView.info = info;
-                [tableView updateWithChannelModels:nil];
-                break;
-            default:
-                break;
-        }
+        [tableView updateWithDataModels:models dataInfo:info];
     }else{
         // 判断是否有
     }
@@ -172,9 +162,24 @@
     return scrollDirectionH | scrollDirectionV;
 }
 
-#pragma mark - 表视图复用处理
+#pragma mark - 表视图复用处理?
 - (void)willShowTableViewWithIndex:(NSInteger)index {
-    
+    // 判断是否需要创建
+    if (index >= self.tableViews.count) {
+        // 创建
+        self.contentSize = CGSizeMake(self.width * (index + 1), self.height);
+        NSInteger createCount = index - self.tableViews.count + 1;
+        for (int i = 0;  i < createCount; i++) {
+            NewestTableView *newestTableView = [[NewestTableView alloc] initWithFrame:CGRectMake(self.width * index, 0, self.width, self.height) style:UITableViewStylePlain];
+            newestTableView.showsVerticalScrollIndicator = NO;
+            newestTableView.delegate = self;
+            [self addSubview:newestTableView];
+            [self.tableViews addObject:newestTableView];
+        }
+    }
+    if ([self.dataSource respondsToSelector:@selector(messageScrollViewWillShowTableViewWithIndex:)]) {
+        [self.dataSource messageScrollViewWillShowTableViewWithIndex:index];
+    }
 }
 
 #pragma mark - ChannelViewDelegate
@@ -198,9 +203,15 @@
         UIScrollViewScrollDirection scrollDirection = [self scrollDirectionWithCurrentPoint:self.contentOffset];
         if (scrollView.panGestureRecognizer.state == UIGestureRecognizerStateBegan && scrollDirection == UIScrollViewScrollDirectionRight) {
             NSLog(@"开始向右滑动");
+            if (self.currentIndex > 0) {
+                [self willShowTableViewWithIndex:self.currentIndex - 1];
+            }
         }
         if (scrollView.panGestureRecognizer.state ==  UIGestureRecognizerStateBegan && scrollDirection == UIScrollViewScrollDirectionLeft) {
             NSLog(@"开始向左滑动");
+            if (self.allChannelCount > self.currentIndex + 1) {
+                [self willShowTableViewWithIndex:self.currentIndex + 1];
+            }
         }
     }
 }

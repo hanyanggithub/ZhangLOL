@@ -24,6 +24,13 @@
 #import "UIScrollView+Extension.h"
 #import "ImageBlur.h"
 
+#define MYDEBUG 1
+#if MYDEBUG
+#define MYLog(xx, ...)  NSLog(@"%s(%d): " xx, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+#else
+#define MYLog(xx, …)  ((void)0)
+#endif
+
 
 #define MAIN_COLOR  [ImageBlur getImagePixelColorWithPoint:[UIImage imageNamed:@"login_btn_qq_icon_normal"] point:CGPointMake(8, 8)]
 
@@ -32,7 +39,7 @@
 #define SCREEN_SCALE (SCREEN_WIDTH / 375.0)
 #define TABBAR_HEIGHT 44.0
 #define NAVIBAR_HEIGHT 64.0
-#define RECOMMEND_VIEW_HEIGHT 200
+#define RECOMMEND_VIEW_HEIGHT 200.0
 
 
 #endif /* PrefixHeader_pch */

@@ -22,18 +22,17 @@
 @property(nonatomic, strong)UITableView *tableView;
 @property(nonatomic, strong)MessageScrollView *messageScrollView;
 @property(nonatomic, strong)MessageViewModel *viewModel;
-@property(nonatomic, strong)NSArray *channelModels;
 @property(nonatomic, strong)ChannelView *channelView;
-@property(nonatomic, strong)NSArray *rencommendModels;
 @property(nonatomic, strong)RecommendView *recommendView;
 @property(nonatomic, strong)RefreshHeaderView *refreshHeader;
 @property(nonatomic, strong)UIImageView *barImageView;
 @property(nonatomic, strong)UIImage *currentBarImage;
 @property(nonatomic, assign)BOOL isVague; // 标记导航栏的虚化状态
 @property(nonatomic, assign)CGPoint priorPoint;
-@property(nonatomic, assign)BOOL startScroll;
+@property(nonatomic, assign)BOOL isStartScroll;
 @property(nonatomic, strong)NSMutableDictionary *everyChannelPages;
 @property(nonatomic, assign)BOOL isLoadingMore;
+
 
 @end
 
@@ -47,7 +46,9 @@
     [self settingSWRevealViewController];
     [self layoutNavigationBar];
     [self createSubviews];
-    [self requestChannelAndRecommendData];
+    [CacheManager defaultSettingSDImageCache];
+    [self requestChannelData];
+    [self requestRecommendData];
 }
 
 - (void)settingSWRevealViewController {
@@ -67,18 +68,24 @@
     [super viewWillDisappear:animated];
     // 将要消失保存当前图片
     self.currentBarImage = self.barImageView.image;
+    // 禁用侧滑
+    self.revealViewController.panGestureRecognizer.enabled = NO;
 }
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     // 将要出现 设置
     self.barImageView.contentMode = UIViewContentModeBottom;
     self.barImageView.image = self.currentBarImage;
+    // 开启侧滑
+    self.revealViewController.panGestureRecognizer.enabled = YES;
 }
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     // 出现之后重新改变子视图层级关系
     [self.navigationController.navigationBar insertSubview:self.barImageView atIndex:0];
 }
+
+#pragma mark - UINavigationControllerDelegate
 - (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
     // 将要突出详细页
     if ([viewController isKindOfClass:NSClassFromString(@"MessgeDetailController")]) {
@@ -136,6 +143,9 @@
 }
 - (void)menuButtonClicked {
     SWRevealViewController *sw = [self revealViewController];
+    if (sw.frontViewPosition == FrontViewPositionLeft) {
+        self.view.userInteractionEnabled = NO;
+    }
     [sw revealToggleAnimated:YES];
 }
 - (void)searchButtonClicked {
@@ -153,7 +163,7 @@
         self.navigationItem.title = @"英雄联盟";
         self.isVague = YES;
         
-    }else if(contentOffsetY < RECOMMEND_VIEW_HEIGHT - 64 && self.isVague == YES && self.startScroll){
+    }else if(contentOffsetY < RECOMMEND_VIEW_HEIGHT - 64 && self.isVague == YES && self.isStartScroll){
         // 没超过
         self.barImageView.image = nil;
         [self.barImageView.subviews firstObject].hidden = YES;
@@ -201,66 +211,100 @@
         }else if (status == RefreshHeaderViewStatusWaitLoosen) {
 //            NSLog(@"释放开始刷新");//do something
         }else{
-            [CacheManager cleanAllImageCacheFromMemory];
-            [weakSelf requestChannelAndRecommendData];
+            [weakSelf requestRecommendData];
+            [weakSelf refreshDataForCurrentChannel];
         }
     }];
 
     self.recommendView = [[RecommendView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.width, RECOMMEND_VIEW_HEIGHT)];
     self.tableView.tableHeaderView = self.recommendView;
 }
-
-- (void)requestNewestAndSpecialData {
-    // 加载资讯页最新频道数据
+- (void)refreshDataForCurrentChannel {
+    // 刷新资讯页当前显示的频道数据
     __weak typeof(self) weakSelf = self;
-    [self.viewModel requestDataWithChannelModel:self.channelModels[0] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
-        [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
-        ChannelModel *model = self.channelModels[0];
+    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[self.messageScrollView.currentIndex] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
+        if (self.messageScrollView.currentIndex == 1) {
+            [weakSelf.messageScrollView updateTableViewsWithModels:nil index:1 info:[NSDictionary dictionaryWithObject:models forKey:@"data"]];
+        }else{
+            [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
+        }
+        ChannelModel *model = self.viewModel.channelModels[self.messageScrollView.currentIndex];
         [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+        [weakSelf.refreshHeader stopRefreshing];
+        
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         NSLog(@"%@",error);
-    }];
-    // 加载资讯页专栏频道数据
-    [self.viewModel requestDataWithChannelModel:self.channelModels[1] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
-        [weakSelf.messageScrollView updateTableViewsWithModels:nil index:1 info:[NSDictionary dictionaryWithObject:models forKey:@"data"]];
-        ChannelModel *model = self.channelModels[0];
-        [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
-    } failure:^(NSURLSessionDataTask *task, NSError *error) {
-        NSLog(@"%@",error);
+        [weakSelf.refreshHeader stopRefreshing];
     }];
 }
-- (void)requestChannelAndRecommendData {
-    // 频道
-    [CacheManager defaultSettingSDImageCache];
-    __weak typeof(self) weakSelf = self;
-    [self.viewModel requestChannelData:CHANNEL_URL success:^(NSURLSessionDataTask *task, NSArray *models) {
-        // 显示频道信息
-        weakSelf.channelModels = models;
-        [weakSelf.channelView updateWithChannelModels:models];
-        // 加载最新和专题
-        [weakSelf requestNewestAndSpecialData];
-        // 如果是下拉刷新触发的结束刷新
-        if (weakSelf.refreshHeader.currentStatus == RefreshHeaderViewStatusRefreshing) {
-            [weakSelf.refreshHeader stopRefreshing];
-        }
-    } failure:^(NSURLSessionDataTask *task, NSError *error) {
-        NSLog(@"%@",error);
-    }];
-  
 
-    // 顶部vendor
-    [self.viewModel requestRecommendData:RENCOMMEND_URL success:^(NSURLSessionDataTask *task, NSArray *models) {
-        // 显示频道信息
-        weakSelf.rencommendModels = models;
-        [weakSelf.recommendView updateWithModels:models];
-        // 如果是下拉刷新触发的结束刷新
-        if (weakSelf.refreshHeader.currentStatus == RefreshHeaderViewStatusRefreshing) {
-            [weakSelf.refreshHeader stopRefreshing];
-        }
+- (void)requestNewestData {
+    // 加载资讯页最新频道数据
+    __weak typeof(self) weakSelf = self;
+    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[0] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
+        
+        [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
+        ChannelModel *model = self.viewModel.channelModels[0];
+        [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+        
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         NSLog(@"%@",error);
     }];
     
+}
+- (void)requestSpecialData {
+    // 加载资讯页专栏频道数据
+    __weak typeof(self) weakSelf = self;
+    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[1] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
+        
+        [weakSelf.messageScrollView updateTableViewsWithModels:nil index:1 info:[NSDictionary dictionaryWithObject:models forKey:@"data"]];
+        ChannelModel *model = self.viewModel.channelModels[1];
+        [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+        
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        NSLog(@"%@",error);
+    }];
+}
+-(void)requestOtherChannelData {
+    for (int i = 2; i < self.viewModel.channelModels.count; i++) {
+        ChannelModel *model = self.viewModel.channelModels[i];
+        [self.viewModel requestDataWithChannelModel:model page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
+            
+        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+            NSLog(@"%@",error);
+        }];
+    }
+}
+- (void)requestChannelData {
+    // 频道
+    __weak typeof(self) weakSelf = self;
+    [self.viewModel requestChannelData:CHANNEL_URL success:^(NSURLSessionDataTask *task, NSArray *models) {
+        // 显示频道信息
+        [weakSelf.channelView updateWithChannelModels:weakSelf.viewModel.channelModels];
+        weakSelf.messageScrollView.allChannelCount = [weakSelf.channelView channelCount];
+        // 加载最新和专题
+        [weakSelf requestNewestData];
+        [weakSelf requestSpecialData];
+        // 加载其他
+        [weakSelf requestOtherChannelData];
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        NSLog(@"%@",error);
+    }];
+
+}
+- (void)requestRecommendData {
+    // 顶部vendor
+    __weak typeof(self) weakSelf = self;
+    [self.viewModel requestRecommendData:RENCOMMEND_URL success:^(NSURLSessionDataTask *task, NSArray *models) {
+        // 显示频道信息
+        [weakSelf.recommendView updateWithModels:models];
+        // 如果是下拉刷新触发的结束刷新
+        [weakSelf.refreshHeader stopRefreshing];
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        NSLog(@"%@",error);
+        [weakSelf.refreshHeader stopRefreshing];
+    }];
+
 }
 
 #pragma mark - UITableViewDelegate
@@ -315,9 +359,9 @@
     if (scrollDirection == UIScrollViewScrollDirectionUp) {
         if (scrollView.contentOffset.y > RECOMMEND_VIEW_HEIGHT - 64) {
             scrollView.contentOffset = CGPointMake(0, RECOMMEND_VIEW_HEIGHT - 64);
-            self.startScroll = NO;
+            self.isStartScroll = NO;
         }else{
-            self.startScroll = YES;
+            self.isStartScroll = YES;
         }
     }
     // 2.2向下滑动
@@ -325,33 +369,43 @@
         UITableView *tableView = [self.messageScrollView currentTableView];
         if (tableView.contentOffset.y > 0) {
             scrollView.contentOffset = CGPointMake(0, RECOMMEND_VIEW_HEIGHT - 64);
-            self.startScroll = NO;
+            self.isStartScroll = NO;
         }else{
-            self.startScroll = YES;
+            self.isStartScroll = YES;
         }
     }
     
 }
 
 #pragma mark - SWRevealViewControllerDelegate
-- (void)revealController:(SWRevealViewController *)revealController didMoveToPosition:(FrontViewPosition)position {
+
+- (void)revealControllerPanGestureBegan:(SWRevealViewController *)revealController {
+    // 关闭滑动交互
+    self.view.userInteractionEnabled = NO;
+    revealController.springDampingRatio = 0.8;
+}
+- (void)revealController:(SWRevealViewController *)revealController willMoveToPosition:(FrontViewPosition)position {
     if (position == FrontViewPositionLeft) {
         // 开启滑动交互
         self.view.userInteractionEnabled = YES;
-        revealController.springDampingRatio = 0.8;
-    }
-    if (position == FrontViewPositionRight) {
-        // 关闭滑动交互
-        self.view.userInteractionEnabled = NO;
         revealController.springDampingRatio = 1.0;
     }
 }
 
 #pragma mark - MessageScrollViewDataSource
+
+- (void)messageScrollViewWillShowTableViewWithIndex:(NSInteger)index {
+    if (index > 1) {
+        
+        ChannelModel *model = self.viewModel.channelModels[index];
+        [self.messageScrollView updateTableViewsWithModels:self.viewModel.allChannelsModelDic[model.channel_id] index:index info:nil];
+    }
+}
+
 - (void)messageScrollViewSubTableViewShouldLoadMoreDataWithIndex:(NSInteger)index {
     self.isLoadingMore = YES;
     // 获取当前页数
-    ChannelModel *model = self.channelModels[index];
+    ChannelModel *model = self.viewModel.channelModels[index];
     NSString *currentPage = [self.everyChannelPages objectForKey:model.channel_id];
     NSString *page = [NSString stringWithFormat:@"%ld",currentPage.integerValue + 1];
     __weak typeof(self) weakSelf = self;

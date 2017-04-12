@@ -12,7 +12,10 @@
 @class SmallCellModel;
 
 @interface MessageViewModel : NSObject
-
+@property(nonatomic, strong)NSMutableArray *channelModels;
+@property(nonatomic, strong)NSMutableArray *rencommendModels;
+@property(nonatomic, strong)NSMutableDictionary *allChannelsModelDic;
+@property(nonatomic, strong)NSMutableArray<SmallCellModel *> *tagedModels; // 存储当前阅读过的消息模型
 
 /**
  请求频道栏数据

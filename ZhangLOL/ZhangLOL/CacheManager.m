@@ -14,7 +14,7 @@
 
 + (void)defaultSettingSDImageCache {
     SDImageCache *cache = [SDImageCache sharedImageCache];
-    cache.maxMemoryCountLimit = 100;
+    cache.maxMemoryCountLimit = 50;
 }
 
 + (void)cleanAllImageCacheFromMemory {

@@ -25,14 +25,12 @@
     self = [super initWithFrame:frame style:style];
     if (self) {
         self.dataSource = self;
-        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.05];
     }
     return self;
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    if (self.info) {
-        self.allDataList = self.info[@"data"];
+    if (self.allDataList) {
         return self.allDataList.count;
     }else{
         return 0;
@@ -62,10 +60,16 @@
     cell.model = self.allDataList[indexPath.section][indexPath.row];
     return cell;
 }
-- (void)updateWithChannelModels:(NSArray *)models {
+- (void)updateWithDataModels:(NSArray *)models dataInfo:(NSDictionary *)dataInfo {
     // 判断数据的变化(单个刷新单元格还是全刷)
-    self.models = models;
-    [self reloadData];
+    if (dataInfo) {
+        self.dataInfo = dataInfo;
+        NSArray *allDataList = dataInfo[@"data"];
+        if (self.allDataList != allDataList) {
+            self.allDataList = allDataList;
+            [self reloadData];
+        }
+    }
 }
 
 @end

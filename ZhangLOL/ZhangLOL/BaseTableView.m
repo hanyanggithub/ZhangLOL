@@ -18,11 +18,12 @@
     self = [super initWithFrame:frame style:style];
     if (self) {
         self.separatorStyle = UITableViewCellSeparatorStyleNone;
+        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.05];
     }
     return self;
 }
 
-- (void)updateWithChannelModels:(NSArray *)models {
+- (void)updateWithDataModels:(NSArray *)models dataInfo:(NSDictionary *)dataInfo {
     
 }
 

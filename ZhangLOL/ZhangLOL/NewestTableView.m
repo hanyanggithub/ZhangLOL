@@ -8,7 +8,6 @@
 
 
 #import "NewestTableView.h"
-#import "HoverView.h"
 #import "SmallCell.h"
 
 @interface NewestTableView ()<UITableViewDataSource>
@@ -24,7 +23,6 @@
 //        self.estimatedRowHeight = 100;
 //        self.rowHeight = UITableViewAutomaticDimension;
         self.dataSource = self;
-        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.05];
 //        HoverView * hoverView = [[HoverView alloc] initWithFrame:CGRectMake(0, 0, self.width, 60)];
 //        self.tableHeaderView = hoverView;
 
@@ -48,13 +46,15 @@
     cell.model = self.models[indexPath.row];
     return cell;
 }
-- (void)updateWithChannelModels:(NSArray *)models {
-    [super updateWithChannelModels:models];
+- (void)updateWithDataModels:(NSArray *)models dataInfo:(NSDictionary *)dataInfo {
     // 判断数据的变化(单个刷新单元格还是全刷)
+    if (models) {
+        if (self.models != models) {
+            self.models = models;
+            [self reloadData];
+        }
+    }
     
-
-    self.models = models;
-    [self reloadData];
 }
 
 

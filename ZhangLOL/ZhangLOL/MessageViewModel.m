@@ -11,13 +11,9 @@
 #import "ChannelModel.h"
 #import "SmallCellModel.h"
 #import "SpecialModel.h"
+#import <malloc/malloc.h>
 
 @interface MessageViewModel ()
-
-@property(nonatomic, strong)NSMutableArray *channelModels;
-@property(nonatomic, strong)NSMutableArray *rencommendModels;
-@property(nonatomic, strong)NSMutableDictionary *allChannelsModelDic;
-@property(nonatomic, strong)NSMutableArray<SmallCellModel *> *tagedModels; // 存储当前阅读过的消息模型
 
 @end
 
@@ -57,13 +53,16 @@
     [ZhangLOLNetwork GET:url parameters:nil progress:^(NSProgress *downloadProgress) {
         
     } success:^(NSURLSessionDataTask *task, id responseObject) {
-        NSMutableArray *arrays = [NSMutableArray array];
+        self.channelModels = nil;
         for (NSDictionary *dic in responseObject) {
             ChannelModel *model = [[ChannelModel alloc] initWithDic:dic];
-            [arrays addObject:model];
+            [self.channelModels addObject:model];
         }
-        self.channelModels = arrays;
-        successHandler(task,arrays);
+        // test
+        [self.channelModels removeObjectAtIndex:2];
+        [self.channelModels removeObjectAtIndex:2];
+        NSArray *newArray = [NSArray arrayWithArray:self.channelModels];
+        successHandler(task,newArray);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         failureHandler(task,error);
     }];
@@ -78,13 +77,13 @@
         
     } success:^(NSURLSessionDataTask *task, id responseObject) {
         NSArray *array = responseObject[@"list"];
-        NSMutableArray *arrays = [NSMutableArray array];
+        self.rencommendModels = nil;
         for (NSDictionary *dic in array) {
             RencommendModel *model = [[RencommendModel alloc] initWithDic:dic];
-            [arrays addObject:model];
+            [self.rencommendModels addObject:model];
         }
-        self.rencommendModels = arrays;
-        successHandler(task,arrays);
+        NSArray *newArray = [NSArray arrayWithArray:self.rencommendModels];
+        successHandler(task,newArray);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         failureHandler(task,error);
     }];
@@ -122,7 +121,8 @@
             }
         }
         [self.allChannelsModelDic setObject:arrays forKey:channelModel.channel_id];
-        successHandler(channelModel,arrays);
+        NSArray *newArray = [NSArray arrayWithArray:arrays];
+        successHandler(channelModel,newArray);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         failureHandler(task,error);
     }];
@@ -199,6 +199,9 @@
             [originData addObjectsFromArray:disposedArray];
         }
     }
+    
+
+    MYLog(@"%ld",malloc_size((__bridge const void *) originData));
     return originData;
 }
 
