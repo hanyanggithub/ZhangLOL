@@ -9,30 +9,61 @@
 #import "AppDelegate.h"
 #import "LeftViewController.h"
 #import "TabBarController.h"
+#import "LaunchViewController.h"
 
 #define LEFT_VIEW_WIDTH (SCREEN_WIDTH * 0.8)
 
-@interface AppDelegate ()
+@interface AppDelegate ()<LaunchViewControllerDelegate,LoginViewControllerDelegate>
 
 @end
 
 @implementation AppDelegate
 
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     _window.backgroundColor = [UIColor whiteColor];
+    LaunchViewController *launchViewController = [[LaunchViewController alloc] init];
+    launchViewController.delegate = self;
+    UINavigationController *launchNavi = [[UINavigationController alloc] initWithRootViewController:launchViewController];
+    _window.rootViewController = launchNavi;
+    [_window makeKeyAndVisible];
+    return YES;
+}
+
+- (void)installContentModules {
     TabBarController *tabBarContr = [[TabBarController alloc] init];
     LeftViewController *left = [[LeftViewController alloc] init];
+    left.userInfo = self.userInfo;
     SWRevealViewController *drawer = [[SWRevealViewController alloc] initWithRearViewController:left frontViewController:tabBarContr];
     drawer.rearViewRevealWidth = LEFT_VIEW_WIDTH;
     drawer.bounceBackOnOverdraw = NO;
     drawer.rearViewRevealOverdraw = 0;
     drawer.toggleAnimationType = SWRevealToggleAnimationTypeSpring;
     drawer.springDampingRatio = 0.8;
-    _window.rootViewController = drawer;
-    [_window makeKeyAndVisible];
-    return YES;
+    self.window.rootViewController = drawer;
+}
+- (void)LaunchViewControllerJudgeLoginStateSucceed:(NSDictionary *)userInfo {
+    self.userInfo = userInfo;
+    [self installContentModules];
+}
+
+- (void)LoginViewControllerTouristPreview:(LoginViewController *)loginViewController {
+    [self installContentModules];
+}
+
+// 8
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(nullable NSString *)sourceApplication annotation:(id)annotation {
+    if ([TencentOAuth CanHandleOpenURL:url]) {
+       return [TencentOAuth  HandleOpenURL:url];
+    }
+    return NO;
+}
+// 9 10
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options {
+    if ([TencentOAuth CanHandleOpenURL:url]) {
+        return [TencentOAuth  HandleOpenURL:url];
+    }
+    return NO;
 }
 
 

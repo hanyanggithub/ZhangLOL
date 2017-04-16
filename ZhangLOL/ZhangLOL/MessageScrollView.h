@@ -24,8 +24,8 @@
 @interface MessageScrollView : UIScrollView
 @property(nonatomic, weak)id<MessageScrollViewDelegate>scrollDelegate;
 @property(nonatomic, weak)id<MessageScrollViewDataSource>dataSource;
-@property(nonatomic, assign)NSInteger currentIndex; // 当前显示的索引位置
-@property(nonatomic, assign)NSInteger allChannelCount; // 所有频道数
+@property(nonatomic, assign, readonly)NSInteger currentIndex;    // 当前显示的索引位置
+@property(nonatomic, assign)NSInteger allChannelCount;           // 所有频道数
 // 刷新子频道数据
 - (void)updateTableViewsWithModels:(NSArray *)models index:(NSInteger)index info:(NSDictionary *)info;
 // 当前显示的表视图

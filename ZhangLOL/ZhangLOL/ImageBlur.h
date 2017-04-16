@@ -13,5 +13,9 @@
 + (UIColor *)getImagePixelColorWithPoint:(UIImage *)image point:(CGPoint)point;
 // 高斯虚化
 + (UIImage *)gaussBlurWithLevel:(CGFloat)blurLevel image:(UIImage *)image;
+// 缩放图片
++ (UIImage *)reSizeImage:(UIImage *)image toSize:(CGSize)reSize;
+// 裁切图片
++ (UIImage *)clipImageWithImage:(UIImage*)image inRect:(CGRect)rect;
 
 @end

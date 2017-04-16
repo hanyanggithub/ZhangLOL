@@ -9,6 +9,7 @@
 #import "RecommendView.h"
 #import "RecommendPageControll.h"
 #import "RencommendModel.h"
+#import "MessgeDetailController.h"
 
 @interface RecommendView ()<UIScrollViewDelegate>
 
@@ -16,7 +17,6 @@
 @property(nonatomic, strong)RecommendPageControll *pageControll;
 @property(nonatomic, strong)NSArray<RencommendModel *> *models;
 @property(nonatomic, strong)NSMutableArray<UIImageView *> *imagesViews;
-//@property(nonatomic, strong)dispatch_source_t timer;
 @property(nonatomic, strong)NSTimer *timer;
 @property(nonatomic, assign)NSInteger currentIndex;
 @property(nonatomic, assign)BOOL isScrolling;
@@ -29,7 +29,6 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
-        self.imagesViews = [NSMutableArray array];
         self.scrollView = [[UIScrollView alloc] initWithFrame:frame];
         self.scrollView.showsHorizontalScrollIndicator = NO;
         self.scrollView.pagingEnabled = YES;
@@ -39,6 +38,23 @@
         [self addSubview:self.scrollView];
     }
     return self;
+}
+- (NSMutableArray *)imagesViews {
+    if (_imagesViews == nil) {
+        _imagesViews = [NSMutableArray array];
+    }
+    return _imagesViews;
+}
+
+- (NSTimer *)timer {
+    if (_timer == nil) {
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            _timer = [NSTimer scheduledTimerWithTimeInterval:3 target:weakSelf selector:@selector(timerAction) userInfo:nil repeats:YES];
+            [[NSRunLoop currentRunLoop] run];
+        });
+    }
+    return _timer;
 }
 
 - (void)changeScrollViewContentWithModels:(NSArray *)models {
@@ -54,9 +70,9 @@
             [self.imagesViews addObject:imageView];
             
         }
-        // 创建定时器
-        [self createTimer];
+        [self startAutoScrolling];
     }else{
+        [self stopAutoScrolling];
         NSInteger count = self.models.count - models.count;
         self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width - self.scrollView.width * count, self.scrollView.height);
         for (int i = 0; i < ABS(count); i++) {
@@ -77,6 +93,7 @@
             }
             
         }
+        [self startAutoScrolling];
     }
     if (self.pageControll != nil) {
         [self.pageControll removeSubviews];
@@ -92,15 +109,6 @@
     
 }
 
-
-- (void)createTimer {
-    if (self.timer == nil) {
-        __weak typeof(self) weakSelf = self;
-        self.timer = [NSTimer scheduledTimerWithTimeInterval:3 target:weakSelf selector:@selector(timerAction) userInfo:nil repeats:YES];
-        NSDate *fireDate = [NSDate dateWithTimeIntervalSinceNow:3];
-        self.timer.fireDate = fireDate;
-    }
-}
 
 - (void)updateWithModels:(NSArray *)models {
     
@@ -133,6 +141,9 @@
     if (image == nil) {
         image = [[SDImageCache sharedImageCache] imageFromDiskCacheForKey:model.image_url_big];
     }
+    image = [ImageBlur reSizeImage:image toSize:CGSizeMake(375 * SCREEN_SCALE, 375 * SCREEN_SCALE * 0.5)];
+    image = [ImageBlur clipImageWithImage:image inRect:CGRectMake(0, image.size.height - 64, image.size.width, 64)];
+    image = [ImageBlur gaussBlurWithLevel:1.0 image:image];
     return image;
 }
 - (void)tapImageViewAction:(UITapGestureRecognizer *)tap {
@@ -146,15 +157,18 @@
     }else{
         model = self.models[imageViewIndex - 1];
     }
-    
-    NSLog(@"%@",model);
+    MessgeDetailController *detail = [MessgeDetailController new];
+    detail.vendorModel = model;
+    [self viewController].hidesBottomBarWhenPushed = YES;
+    [self.viewController.navigationController pushViewController:detail animated:YES];
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-  
-    self.timer.fireDate = [NSDate dateWithTimeIntervalSinceNow:3];
+    if (scrollView.isDragging) {
+        [self stopAutoScrolling];
+    }
     NSInteger page = self.scrollView.contentOffset.x / self.scrollView.width;
     CGFloat x = self.scrollView.contentOffset.x - page * self.scrollView.width;
-    if (x > self.scrollView.width / 2.0) {// 显示后一页
+    if (x > self.scrollView.width * 0.5) {// 显示后一页
         if (page != 0 && page != self.models.count + 1) {
             self.currentIndex = page;
         }
@@ -187,13 +201,24 @@
     }
     
 }
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    [self startAutoScrolling];
+}
 
 - (void)timerAction {
-    [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x + self.scrollView.width, 0) animated:YES];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x + self.scrollView.width, 0) animated:YES];
+    });
+}
+
+- (void)startAutoScrolling {
+    self.timer.fireDate = [NSDate dateWithTimeIntervalSinceNow:3];
+}
+- (void)stopAutoScrolling {
+    self.timer.fireDate = [NSDate distantFuture];
 }
 
 - (void)dealloc {
-//    dispatch_source_cancel(self.timer);
     [self.timer invalidate];
     self.timer = nil;
 }

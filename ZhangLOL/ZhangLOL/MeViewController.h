@@ -6,8 +6,8 @@
 //  Copyright © 2017年 rengukeji. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "BaseViewController.h"
 
-@interface MeViewController : UIViewController
+@interface MeViewController : BaseViewController
 
 @end

@@ -114,7 +114,7 @@
     [super layoutSubviews];
     if (self.model) {
         SmallCellModel *model = (SmallCellModel *)self.model;
-        [self.titleImage sd_setImageWithURL:[NSURL URLWithString:model.image_url_small] placeholderImage:[UIImage new] options:SDWebImageProgressiveDownload];
+        [self.titleImage sd_setImageWithURL:[NSURL URLWithString:model.image_url_small] placeholderImage:[UIImage imageNamed:@"place"] options:SDWebImageProgressiveDownload|SDWebImageRetryFailed];
         if (model.isRead) {
             self.title.textColor = [UIColor grayColor];
         }else{

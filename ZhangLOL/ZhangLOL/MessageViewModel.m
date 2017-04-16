@@ -11,7 +11,6 @@
 #import "ChannelModel.h"
 #import "SmallCellModel.h"
 #import "SpecialModel.h"
-#import <malloc/malloc.h>
 
 @interface MessageViewModel ()
 
@@ -59,8 +58,8 @@
             [self.channelModels addObject:model];
         }
         // test
-        [self.channelModels removeObjectAtIndex:2];
-        [self.channelModels removeObjectAtIndex:2];
+//        [self.channelModels removeObjectAtIndex:2];
+//        [self.channelModels removeObjectAtIndex:2];
         NSArray *newArray = [NSArray arrayWithArray:self.channelModels];
         successHandler(task,newArray);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -199,9 +198,6 @@
             [originData addObjectsFromArray:disposedArray];
         }
     }
-    
-
-    MYLog(@"%ld",malloc_size((__bridge const void *) originData));
     return originData;
 }
 

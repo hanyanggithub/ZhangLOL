@@ -9,7 +9,7 @@
 #import "MessgeDetailController.h"
 #import <WebKit/WebKit.h>
 
-@interface MessgeDetailController ()
+@interface MessgeDetailController ()<UIGestureRecognizerDelegate>
 @property(nonatomic, strong)WKWebView *webView;
 
 @end
@@ -18,26 +18,50 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self createSubviews];
     [self settingNavigationBar];
-    WKWebViewConfiguration *cofig = [[WKWebViewConfiguration alloc] init];
-    self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:cofig];
-    [self.view addSubview:self.webView];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:self.model.article_url] cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10.0];
-    [self.webView loadRequest:request];
+}
+
+- (void)createSubviews {
     
+    WKWebViewConfiguration *cofig = [[WKWebViewConfiguration alloc] init];
+    self.webView = [[WKWebView alloc] initWithFrame:CGRectMake(0, 44, self.view.width, self.view.height - 44) configuration:cofig];
+    [self.view addSubview:self.webView];
+    NSString *urlStr = nil;
+    if (self.cellModel) {
+        urlStr = self.cellModel.article_url;
+    }else if (self.vendorModel) {
+        urlStr = self.vendorModel.article_url;
+    }else{
+        
+    }
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlStr] cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:30.0];
+    [self.webView loadRequest:request];
 }
 
 - (void)settingNavigationBar {
-    self.navigationItem.title = @"资讯详情";
+    
+    [self.view insertSubview:self.customNaviBar aboveSubview:self.webView];
+    self.customNaviItem.title = @"资讯详情";
+    [self.customNaviBar setBackgroundImage:[UIImage imageNamed:@"nav_bar_bg_for_seven"] forBarMetrics:UIBarMetricsDefault];
+    
+    
     UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
     backButton.frame = CGRectMake(0, 0, 22, 40);
     [backButton setImage:[UIImage imageNamed:@"nav_btn_back_tiny_normal"] forState:UIControlStateNormal];
     [backButton setImage:[UIImage imageNamed:@"nav_btn_back_tiny__pressed"] forState:UIControlStateHighlighted];
-    
     [backButton addTarget:self action:@selector(backButtonClicked) forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:backButton];
-    self.navigationItem.leftBarButtonItem = leftItem;
+    self.customNaviItem.leftBarButtonItem = leftItem;
     
+    __weak id systemTarget = self.navigationController.interactivePopGestureRecognizer.delegate;
+    UIPanGestureRecognizer *popPan = [[UIPanGestureRecognizer alloc] initWithTarget:systemTarget action:NSSelectorFromString(@"handleNavigationTransition:")];
+    [self.view addGestureRecognizer:popPan];
+    self.navigationController.interactivePopGestureRecognizer.enabled = NO;
+    
+}
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    return YES;
 }
 - (void)backButtonClicked {
     if (self.webView.isLoading) {

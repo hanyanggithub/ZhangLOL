@@ -33,12 +33,12 @@
     self = [super initWithFrame:CGRectMake(0, 0, scrollView.frame.size.width, REFRESH_HEADER_HEIGHT)];
     if (self) {
         self.scrollView = scrollView;
-        self.oriFrame = CGRectMake((self.frame.size.width - 40) / 2.0, 20, 40, 50);
+        self.oriFrame = CGRectMake((self.frame.size.width - 60.0) * 0.5, 20, 60, 60);
         self.containerView = [[UIView alloc] initWithFrame:self.oriFrame];
-        self.containerView.backgroundColor = [UIColor whiteColor];
+        self.containerView.backgroundColor = [UIColor colorWithRed:1 green:1 blue:1 alpha:0.8];
         [self addSubview:self.containerView];
         
-        self.animationView = [[UIImageView alloc] initWithFrame:CGRectMake(5, 0, 30, 30)];
+        self.animationView = [[UIImageView alloc] initWithFrame:CGRectMake((self.oriFrame.size.width - 36.0) * 0.5, 0, 36, 36)];
         NSMutableArray *images = [NSMutableArray array];
         for (int i = 1; i < 8; i++) {
             [images addObject:[UIImage imageNamed:[NSString stringWithFormat:@"personal_refresh_loading2%d",i]]];
@@ -49,16 +49,17 @@
         self.animationView.animationDuration = 0.35; // 一张0.05秒 20fps
         [self.containerView addSubview:self.animationView];
         
-        self.tipLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 30, 40, 20)];
+        self.tipLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, self.animationView.bottom, self.oriFrame.size.width, self.oriFrame.size.height - self.animationView.height)];
         self.tipLabel.textAlignment = NSTextAlignmentCenter;
-        self.tipLabel.font = [UIFont systemFontOfSize:9];
+        self.tipLabel.font = [UIFont systemFontOfSize:10];
         self.tipLabel.text = @"下拉刷新";
         self.tipLabel.textColor = [UIColor blackColor];
         [self.containerView addSubview:self.tipLabel];
         
         self.scrollView.backgroundColor = [UIColor clearColor];
         [self.scrollView.superview insertSubview:self belowSubview:self.scrollView];
-        [self.scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:nil];
+        [self.scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:nil];
+        [self.scrollView addObserver:self forKeyPath:@"panGestureRecognizer.state" options:NSKeyValueObservingOptionNew context:nil];
     }
     return self;
 }
@@ -68,36 +69,63 @@
                        context:(void *)context {
     
     NSNumber *new = change[NSKeyValueChangeNewKey];
-    
+    NSNumber *old = change[NSKeyValueChangeOldKey];
     if ([keyPath isEqualToString:@"contentOffset"]) {
         CGPoint pointNew = new.CGPointValue;
+        CGPoint pointOld = old.CGPointValue;
         CGFloat newY = pointNew.y;
-        
-        if (newY >= 0) {
-            if (self.status != RefreshHeaderViewStatusRefreshing) {
+        CGFloat oldY = pointOld.y;
+        // 跟随scrollView移动
+        if (ABS(newY) > TRIGGER_HEIGHT) {
+            CGFloat increment =  ABS(newY) - TRIGGER_HEIGHT;
+            self.containerView.frame = CGRectMake(self.oriFrame.origin.x, self.oriFrame.origin.y + increment, self.oriFrame.size.width, self.oriFrame.size.height);
+        }else{
+            self.containerView.frame = self.oriFrame;
+        }
+        // 下滑时期
+        if (oldY >= newY) {
+            if (newY >= 0) {
                 self.status = RefreshHeaderViewStatusWaitScroll;
                 self.tipLabel.text = @"下拉刷新";
-            }
-        }else if (newY > -TRIGGER_HEIGHT) {
-            if (self.status != RefreshHeaderViewStatusRefreshing) {
+                
+            }else if (newY > -TRIGGER_HEIGHT) {
                 self.status = RefreshHeaderViewStatusScrolling;
                 self.tipLabel.text = @"下拉刷新";
-            }
-            
-        }else{
-      
-            if (self.scrollView.isDecelerating && self.status != RefreshHeaderViewStatusRefreshing) {
-                // 刷新动画
-                [self startRefreshing];
-            }else if (self.status != RefreshHeaderViewStatusRefreshing){
+            }else{
                 self.status = RefreshHeaderViewStatusWaitLoosen;
                 self.tipLabel.text = @"释放刷新";
-                // 跟随
-                CGFloat v = ABS(newY) - (TRIGGER_HEIGHT - self.oriFrame.origin.y);
-                self.containerView.frame = CGRectMake(self.oriFrame.origin.x, v, self.oriFrame.size.width, self.oriFrame.size.height);
                 
             }
+        }else{
+            // 上滑时期
+            if (oldY >= 0) {
+                if (self.status != RefreshHeaderViewStatusRefreshing) {
+                    self.status = RefreshHeaderViewStatusWaitScroll;
+                    self.tipLabel.text = @"下拉刷新";
+                }
+            }else if (oldY > -TRIGGER_HEIGHT) {
+                if (self.status != RefreshHeaderViewStatusRefreshing) {
+                    self.status = RefreshHeaderViewStatusScrolling;
+                    self.tipLabel.text = @"下拉刷新";
+                }
+                
+            }else{
+                
+                if (self.status != RefreshHeaderViewStatusRefreshing) {
+                    if (self.scrollView.panGestureRecognizer.state == UIGestureRecognizerStateEnded) {
+                        self.status = RefreshHeaderViewStatusWaitLoosen;
+                        self.tipLabel.text = @"释放刷新";
+                
+                    }
+                }
+            }
             
+        }
+        
+    }else{
+        NSInteger newState = new.integerValue;
+        if (newState == UIGestureRecognizerStateEnded && -self.scrollView.contentOffset.y > TRIGGER_HEIGHT) {
+            [self startRefreshing];
         }
         
     }

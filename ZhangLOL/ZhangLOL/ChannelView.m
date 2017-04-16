@@ -26,6 +26,7 @@
     self = [super initWithFrame:frame];
     if (self) {
         self.backgroundColor = [UIColor whiteColor];
+        self.currentIndex = 0;
         self.labels = [NSMutableArray array];
         self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
         self.scrollView.showsHorizontalScrollIndicator = NO;
@@ -56,7 +57,7 @@
             UIControl *tabContainer = [[UIControl alloc] initWithFrame:CGRectMake(i * tabWidth, 0, tabWidth, CHANNELBAR_HEIGHT)];
             [tabContainer addTarget:self action:@selector(clickedTab:) forControlEvents:UIControlEventTouchUpInside];
             UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(tabContainer.width * 0.25, tabContainer.height * 0.25, tabContainer.width * 0.5, tabContainer.height * 0.5)];
-            label.textColor = [UIColor grayColor];
+            label.textColor = [UIColor blackColor];
             label.textAlignment = NSTextAlignmentCenter;
             label.font = [UIFont systemFontOfSize:17.0];
             ChannelModel *model = models[i];
@@ -72,7 +73,9 @@
             UILabel *label = self.labels[i];
             ChannelModel *model = models[i];
             label.text = model.name;
-        
+            if (i == self.currentIndex) {
+                label.textColor = MAIN_COLOR;
+            }
         }
     }
     // 设置indicator
@@ -80,6 +83,7 @@
     self.indicator.frame = CGRectMake(label.left, label.bottom, label.width, label.width/78.0 *11.0);
     self.indicator.hidden = NO;
     [self.scrollView bringSubviewToFront:self.indicator];
+    
     
 }
 
@@ -105,11 +109,11 @@
     self.userInteractionEnabled = NO;
     // 1.清空选中状态
     UILabel *labelFont = [self.labels objectAtIndex:self.currentIndex];
-    labelFont.textColor = [UIColor grayColor];
+    labelFont.textColor = [UIColor blackColor];
     // 2.scrollView滑动到某位置
     // 1.1 label.centerx - screenwidth /2.0
     UILabel *labelNow = [self.labels objectAtIndex:index];
-    labelNow.textColor = [UIColor blackColor];
+    labelNow.textColor = MAIN_COLOR;
     
     UIView *container = labelNow.superview;
     // 将要滑动的位置 >0 && < contentOffset - self.width

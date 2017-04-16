@@ -124,7 +124,7 @@
     [super layoutSubviews];
     if (self.model) {
         SpecialModel *model = (SpecialModel *)self.model;
-        [self.titleImage sd_setImageWithURL:[NSURL URLWithString:model.logo] placeholderImage:[UIImage new] options:SDWebImageProgressiveDownload];
+        [self.titleImage sd_setImageWithURL:[NSURL URLWithString:model.logo] placeholderImage:[UIImage imageNamed:@"locate_view_head_default_icon"] options:SDWebImageProgressiveDownload|SDWebImageRetryFailed];
         self.title.text = model.col_title;
         self.subTitle.text = model.last_news_title;
         self.time.text = [NSString stringWithFormat:@"%@更新",[self dealTimeWithDateString:model.last_update]];

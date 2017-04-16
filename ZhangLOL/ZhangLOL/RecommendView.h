@@ -13,5 +13,7 @@
 
 - (void)updateWithModels:(NSArray *)models;
 - (UIImage *)getCurrentShowImage;
+- (void)startAutoScrolling;
+- (void)stopAutoScrolling;
 
 @end

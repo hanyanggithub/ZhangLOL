@@ -15,6 +15,7 @@
 #import <UIKit/UIKit.h>
 
 #import <UIImageView+WebCache.h>
+#import <UIButton+WebCache.h>
 #import <Masonry.h>
 #import <SWRevealViewController.h>
 
@@ -23,6 +24,7 @@
 #import "UIView+Extension.h"
 #import "UIScrollView+Extension.h"
 #import "ImageBlur.h"
+#import <TencentOpenAPI/TencentOAuth.h>
 
 #define MYDEBUG 1
 #if MYDEBUG
@@ -31,8 +33,15 @@
 #define MYLog(xx, …)  ((void)0)
 #endif
 
+#define QQ_APP_ID               @"1105106934"
+#define QQ_APP_KEY              @"MXDO5ILaL1l2rEF3"
+#define QQ_TOKEN_KEY            @"QQ_TOKEN_KEY"
+#define QQ_OPENID_KEY           @"QQ_OPENID_KEY"
+#define QQ_TOKEN_EXDATE_KEY     @"QQ_TOKEN_EXDATE_KEY"
 
 #define MAIN_COLOR  [ImageBlur getImagePixelColorWithPoint:[UIImage imageNamed:@"login_btn_qq_icon_normal"] point:CGPointMake(8, 8)]
+
+#define USER_DEFAULTS  [NSUserDefaults standardUserDefaults]
 
 #define SCREEN_WIDTH ([UIScreen mainScreen].bounds.size.width)
 #define SCREEN_HEIGHT ([UIScreen mainScreen].bounds.size.height)
@@ -40,6 +49,13 @@
 #define TABBAR_HEIGHT 44.0
 #define NAVIBAR_HEIGHT 64.0
 #define RECOMMEND_VIEW_HEIGHT 200.0
+
+#define IPHONE_4 ([UIScreen mainScreen].bounds.size.height == 480.0 ? YES : NO)
+#define IPHONE_5 ([UIScreen mainScreen].bounds.size.height == 568.0 ? YES : NO)
+#define IPHONE_6 ([UIScreen mainScreen].bounds.size.height == 667.0 ? YES : NO)
+#define IPHONE_6P ([UIScreen mainScreen].bounds.size.height == 736.0 ? YES : NO)
+
+#define SYSTEM_VERSION  ([[UIDevice currentDevice] systemVersion].floatValue)
 
 
 #endif /* PrefixHeader_pch */

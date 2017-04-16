@@ -9,5 +9,5 @@
 #import <UIKit/UIKit.h>
 
 @interface LeftViewController : UIViewController
-
+@property(nonatomic, strong)NSDictionary *userInfo;
 @end

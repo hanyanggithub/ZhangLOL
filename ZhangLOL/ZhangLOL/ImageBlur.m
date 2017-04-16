@@ -8,6 +8,7 @@
 
 #import "ImageBlur.h"
 #import <Accelerate/Accelerate.h>
+#import <ImageIO/ImageIO.h>
 
 @implementation ImageBlur
 
@@ -56,16 +57,17 @@
     CGRect imageRect = { CGPointZero, image.size};
     UIImage *effectImage = image;
     
-    UIGraphicsBeginImageContextWithOptions(image.size, NO, 0.0);
+    UIGraphicsBeginImageContextWithOptions(image.size, YES, 0.0);
     CGContextRef effectInContext = UIGraphicsGetCurrentContext();
     [image drawInRect:imageRect];
+    
     vImage_Buffer effectInBuffer;
     effectInBuffer.data     = CGBitmapContextGetData(effectInContext);
     effectInBuffer.width    = CGBitmapContextGetWidth(effectInContext);
     effectInBuffer.height   = CGBitmapContextGetHeight(effectInContext);
     effectInBuffer.rowBytes = CGBitmapContextGetBytesPerRow(effectInContext);
     
-    UIGraphicsBeginImageContextWithOptions(image.size, NO, 0.0);
+    UIGraphicsBeginImageContextWithOptions(image.size, YES, 0.0);
     CGContextRef effectOutContext = UIGraphicsGetCurrentContext();
     
     vImage_Buffer effectOutBuffer;
@@ -77,12 +79,38 @@
     vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
     vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
     vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
+    vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
+    vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
     
     effectImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     UIGraphicsEndImageContext();
     
     return effectImage;
+}
+
++ (UIImage *)reSizeImage:(UIImage *)image toSize:(CGSize)reSize {
+    
+    UIGraphicsBeginImageContext(CGSizeMake(reSize.width, reSize.height));
+    [image drawInRect:CGRectMake(0, 0, reSize.width, reSize.height)];
+    UIImage *reSizeImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return reSizeImage;
+    
+}
+
+
++ (UIImage *)clipImageWithImage:(UIImage*)image inRect:(CGRect)rect {
+    
+    CGImageRef imageRef = CGImageCreateWithImageInRect(image.CGImage, rect);
+    UIGraphicsBeginImageContext(image.size);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextDrawImage(context, rect, imageRef);
+    UIImage *clipImage = [UIImage imageWithCGImage:imageRef];
+    CFRelease(imageRef);
+    UIGraphicsEndImageContext();
+    return clipImage;
+    
 }
 
 

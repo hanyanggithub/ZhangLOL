@@ -328,6 +328,7 @@ didReceiveResponse:(NSURLResponse *)response
                 orientation = [[self class] orientationFromPropertyValue:(orientationValue == -1 ? 1 : orientationValue)];
 #endif
             }
+
         }
 
         if (width + height > 0 && totalSize < self.expectedSize) {

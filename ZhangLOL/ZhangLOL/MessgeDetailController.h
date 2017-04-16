@@ -6,10 +6,11 @@
 //  Copyright © 2017年 rengukeji. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "BaseViewController.h"
 #import "SmallCellModel.h"
-@interface MessgeDetailController : UIViewController
+#import "RencommendModel.h"
+@interface MessgeDetailController : BaseViewController
 
-@property(nonatomic, strong)SmallCellModel *model;
-
+@property(nonatomic, strong)SmallCellModel *cellModel;
+@property(nonatomic, strong)RencommendModel *vendorModel;
 @end

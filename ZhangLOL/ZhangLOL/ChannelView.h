@@ -23,4 +23,5 @@
 @property(nonatomic, weak)id<ChannelViewDelegate>delegate;
 - (void)updateWithChannelModels:(NSArray *)models;
 - (NSInteger)channelCount;
+
 @end

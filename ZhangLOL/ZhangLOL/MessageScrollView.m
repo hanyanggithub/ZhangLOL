@@ -13,12 +13,15 @@
 #import "ChannelView.h"
 #import "CacheManager.h"
 @interface MessageScrollView ()<UITableViewDelegate,UIGestureRecognizerDelegate,ChannelViewDelegate>
+@property(nonatomic, strong)NSArray *classArray;
 @property(nonatomic, strong)NSMutableArray *reusableTables; // 可复用表视图
 @property(nonatomic, strong)NSMutableArray *tableViews;     // 所有的子视图
 @property(nonatomic, assign)CGPoint priorPoint;
+@property(nonatomic, assign)BOOL isScrolling;
 @end
 
 @implementation MessageScrollView
+
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -28,26 +31,20 @@
         self.currentIndex = 0;
         self.pagingEnabled = YES;
         self.delegate = self;
-        self.directionalLockEnabled = YES;
-        self.alwaysBounceHorizontal = YES;
     }
     return self;
 }
-- (void)createFirstTwoTableViews {
-    self.contentSize = CGSizeMake(self.width * 2, self.height);
-    NewestTableView *newestTableView = [[NewestTableView alloc] initWithFrame:CGRectMake(0, 0, self.width, self.height) style:UITableViewStylePlain];
-    newestTableView.showsVerticalScrollIndicator = NO;
-    newestTableView.delegate = self;
-    [self addSubview:newestTableView];
-    [self.tableViews addObject:newestTableView];
-    
-    SpecialTableView *specialTableView = [[SpecialTableView alloc] initWithFrame:CGRectMake(self.width, 0, self.width, self.height) style:UITableViewStyleGrouped];
-    specialTableView.showsVerticalScrollIndicator = NO;
-    specialTableView.delegate = self;
-    [self addSubview:specialTableView];
-    [self.tableViews addObject:specialTableView];
+- (void)setCurrentIndex:(NSInteger)currentIndex {
+    if (_currentIndex != currentIndex) {
+        _currentIndex = currentIndex;
+    }
 }
-
+- (NSArray *)classArray {
+    if (_classArray == nil) {
+        _classArray = [NSArray arrayWithObjects:[NewestTableView class],[SpecialTableView class], nil];
+    }
+    return _classArray;
+}
 - (NSMutableArray *)tableViews {
     if (_tableViews == nil) {
         _tableViews = [NSMutableArray array];
@@ -55,7 +52,28 @@
     return _tableViews;
 }
 - (UITableView *)currentTableView {
-    return self.tableViews[self.currentIndex];
+    if (self.currentIndex < self.tableViews.count) {
+        return self.tableViews[self.currentIndex];
+    }else{
+        return nil;
+    }
+}
+
+- (void)createFirstTwoTableViews {
+    self.contentSize = CGSizeMake(self.width * 2, self.height);
+    for (int i = 0; i < self.classArray.count; i++) {
+        Class class = self.classArray[i];
+        BaseTableView *tableView = nil;
+        if (i == 1) {
+            tableView = [[class alloc] initWithFrame:CGRectMake(self.width * i, 0, self.width, self.height) style:UITableViewStyleGrouped];
+        }else{
+            tableView = [[class alloc] initWithFrame:CGRectMake(self.width * i, 0, self.width, self.height) style:UITableViewStylePlain];
+        }
+        tableView.showsVerticalScrollIndicator = NO;
+        tableView.delegate = self;
+        [self addSubview:tableView];
+        [self.tableViews addObject:tableView];
+    }
 }
 
 
@@ -120,15 +138,15 @@
 }
 
 #pragma mark - 滑动视图滑动时禁止子视图的表视图滑动逻辑
-- (void)subTableInteractionWithScrollView:(UIScrollView *)scrollView {
-    if (scrollView.panGestureRecognizer.state == UIGestureRecognizerStateChanged) {
+- (void)subTableInteraction{
+    if (self.panGestureRecognizer.state == UIGestureRecognizerStateChanged) {
         for (UITableView *tableView in self.tableViews) {
             if (tableView.scrollEnabled) {
                 tableView.scrollEnabled = NO;
             }
         }
     }
-    if (scrollView.panGestureRecognizer.state == UIGestureRecognizerStatePossible) {
+    if (self.panGestureRecognizer.state == UIGestureRecognizerStatePossible) {
         for (UITableView *tableView in self.tableViews) {
             if (!tableView.scrollEnabled) {
                 tableView.scrollEnabled = YES;
@@ -162,15 +180,35 @@
     return scrollDirectionH | scrollDirectionV;
 }
 
-#pragma mark - 表视图复用处理?
+
+- (void)subTableShowJudge {
+    UIScrollViewScrollDirection scrollDirection = [self scrollDirectionWithCurrentPoint:self.contentOffset];
+    if (!self.isScrolling && scrollDirection == UIScrollViewScrollDirectionRight) {
+        NSLog(@"开始向右滑动");
+        self.isScrolling = YES;
+        if (self.currentIndex > 0) {
+            [self willShowTableViewWithIndex:self.currentIndex - 1];
+        }
+    }
+    if (!self.isScrolling && scrollDirection == UIScrollViewScrollDirectionLeft) {
+        NSLog(@"开始向左滑动");
+        self.isScrolling = YES;
+        if (self.allChannelCount > self.currentIndex + 1) {
+            [self willShowTableViewWithIndex:self.currentIndex + 1];
+        }
+    }
+}
+#pragma mark - 将要显示新的表视图方法调用
+// TODO 解决复用
 - (void)willShowTableViewWithIndex:(NSInteger)index {
     // 判断是否需要创建
     if (index >= self.tableViews.count) {
         // 创建
         self.contentSize = CGSizeMake(self.width * (index + 1), self.height);
+        NSInteger orinCount = self.tableViews.count;
         NSInteger createCount = index - self.tableViews.count + 1;
         for (int i = 0;  i < createCount; i++) {
-            NewestTableView *newestTableView = [[NewestTableView alloc] initWithFrame:CGRectMake(self.width * index, 0, self.width, self.height) style:UITableViewStylePlain];
+            NewestTableView *newestTableView = [[NewestTableView alloc] initWithFrame:CGRectMake(self.width * (orinCount + i), 0, self.width, self.height) style:UITableViewStylePlain];
             newestTableView.showsVerticalScrollIndicator = NO;
             newestTableView.delegate = self;
             [self addSubview:newestTableView];
@@ -182,10 +220,25 @@
     }
 }
 
+#pragma mark - 子视图切换时将上一个显示的表视图contentOffset.x至为0
+- (void)resetSubPriorTableViewContentOffset {
+    NSInteger index = self.contentOffset.x / self.width;
+    if (self.currentIndex != index) {
+        UITableView *priorTableView = self.tableViews[self.currentIndex];
+        priorTableView.contentOffset = CGPointMake(0, 0);
+    }
+    self.currentIndex = index;
+    if ([self.scrollDelegate respondsToSelector:@selector(messageScrollViewScrolledIndex:)]) {
+        [self.scrollDelegate messageScrollViewScrolledIndex:index];
+    }
+}
+
 #pragma mark - ChannelViewDelegate
 - (void)channelViewTabClickedWithIndex:(NSInteger)index {
-    if (index >= 0 && index < self.tableViews.count) {
-        [self setContentOffset:CGPointMake(self.width * index, 0) animated:YES];
+    if (index >= 0 && index < self.allChannelCount) {
+        [self willShowTableViewWithIndex:index];
+        [self setContentOffset:CGPointMake(self.width * index, 0) animated:NO];
+        self.currentIndex = index;
     }
 }
 #pragma mark - UIScrollViewDelegate
@@ -193,52 +246,32 @@
     
     if (scrollView != self) {
         // 子视图代理逻辑
+        // 处理滑动时子视图表视图和父视图表视图的位置关系
         [self scrollInteractionWithScrollView:scrollView];
+        // 缓存清理
         [self disposeCleanMemoryImageWithScrollView:scrollView];
+        // 当前表视图加载更多数据
         [self loadMoreInteractionWithScrollView:scrollView];
         
     }else{
-        // 本对象逻辑
-        [self subTableInteractionWithScrollView:scrollView];
-        UIScrollViewScrollDirection scrollDirection = [self scrollDirectionWithCurrentPoint:self.contentOffset];
-        if (scrollView.panGestureRecognizer.state == UIGestureRecognizerStateBegan && scrollDirection == UIScrollViewScrollDirectionRight) {
-            NSLog(@"开始向右滑动");
-            if (self.currentIndex > 0) {
-                [self willShowTableViewWithIndex:self.currentIndex - 1];
-            }
-        }
-        if (scrollView.panGestureRecognizer.state ==  UIGestureRecognizerStateBegan && scrollDirection == UIScrollViewScrollDirectionLeft) {
-            NSLog(@"开始向左滑动");
-            if (self.allChannelCount > self.currentIndex + 1) {
-                [self willShowTableViewWithIndex:self.currentIndex + 1];
-            }
-        }
+        // 处理当scrollView滑动时子视图的滑动是否可用
+        [self subTableInteraction];
+        // 处理当scrollView即将滑动到新的子视图位置即将显示的位置判断
+        [self subTableShowJudge];
+        
     }
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
     if (scrollView == self) {
-        NSInteger index = scrollView.contentOffset.x / scrollView.width;
-        if (self.currentIndex != index) {
-            UITableView *priorTableView = self.tableViews[self.currentIndex];
-            priorTableView.contentOffset = CGPointMake(0, 0);
-        }        self.currentIndex = index;
-        if ([self.scrollDelegate respondsToSelector:@selector(messageScrollViewScrolledIndex:)]) {
-            [self.scrollDelegate messageScrollViewScrolledIndex:index];
-        }
+        [self resetSubPriorTableViewContentOffset];
+        self.isScrolling = NO;
     }
 }
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
     if (scrollView == self) {
-        NSInteger index = scrollView.contentOffset.x / scrollView.width;
-        if (self.currentIndex != index) {
-            UITableView *priorTableView = self.tableViews[self.currentIndex];
-            priorTableView.contentOffset = CGPointMake(0, 0);
-        }
-        self.currentIndex = index;
-        if ([self.scrollDelegate respondsToSelector:@selector(messageScrollViewScrolledIndex:)]) {
-            [self.scrollDelegate messageScrollViewScrolledIndex:index];
-        }
+        [self resetSubPriorTableViewContentOffset];
+        self.isScrolling = NO;
     }
 }
 
@@ -247,8 +280,8 @@
     // 判断tableView的class
     if ([tableView isMemberOfClass:[NewestTableView class]]) {
         MessgeDetailController *detail = [[MessgeDetailController alloc] init];
-        detail.model = [[tableView cellForRowAtIndexPath:indexPath] valueForKey:@"model"];
-        [detail.model setValue:@(1) forKey:@"isRead"];
+        detail.cellModel = [[tableView cellForRowAtIndexPath:indexPath] valueForKey:@"model"];
+        [detail.cellModel setValue:@(1) forKey:@"isRead"];
         [tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
         [self viewController].hidesBottomBarWhenPushed = YES;
         [[self viewController].navigationController pushViewController:detail animated:YES];

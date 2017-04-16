@@ -13,17 +13,17 @@
 
 
 - (void)removeFromSuperview {
-    [super removeFromSuperview];
+    
     RefreshHeaderView *view = [self getRefreshHeaderView];
     if (view) {
         [self removeObserver:view forKeyPath:@"contentOffset"];
-        [self removeObserver:view forKeyPath:@"isDecelerating"];
     }
+    [super removeFromSuperview];
 }
 
 - (RefreshHeaderView *)getRefreshHeaderView {
 
-    for (UIView *view in self.subviews) {
+    for (UIView *view in self.superview.subviews) {
         if ([view isKindOfClass:[RefreshHeaderView class]]) {
             return (RefreshHeaderView *)view;
         }
