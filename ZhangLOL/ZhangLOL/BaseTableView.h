@@ -10,7 +10,7 @@
 
 @interface BaseTableView : UITableView
 @property(nonatomic, assign)CGPoint priorPoint;
-@property(nonatomic, strong)NSArray *models;
+@property(nonatomic, weak)NSArray *models;  // 指向viewModel所持有的数据
 @property(nonatomic, strong)NSDictionary *dataInfo;
 - (void)updateWithDataModels:(NSArray *)models dataInfo:(NSDictionary *)dataInfo;
 @end

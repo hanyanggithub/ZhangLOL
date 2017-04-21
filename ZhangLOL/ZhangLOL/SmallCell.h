@@ -6,6 +6,7 @@
 //  Copyright © 2017年 rengukeji. All rights reserved.
 //
 
-#import "BaseTableViewCell.h"
-@interface SmallCell : BaseTableViewCell
+#import "NewestBaseCell.h"
+@interface SmallCell : NewestBaseCell
+
 @end

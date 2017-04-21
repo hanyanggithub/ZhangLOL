@@ -11,24 +11,24 @@
 
 @implementation UIScrollView (Extension)
 
-
-- (void)removeFromSuperview {
-    
-    RefreshHeaderView *view = [self getRefreshHeaderView];
-    if (view) {
-        [self removeObserver:view forKeyPath:@"contentOffset"];
-    }
-    [super removeFromSuperview];
-}
-
-- (RefreshHeaderView *)getRefreshHeaderView {
-
-    for (UIView *view in self.superview.subviews) {
-        if ([view isKindOfClass:[RefreshHeaderView class]]) {
-            return (RefreshHeaderView *)view;
-        }
-    }
-    return nil;
-}
+//
+//- (void)removeFromSuperview {
+//    
+//    RefreshHeaderView *view = [self getRefreshHeaderView];
+//    if (view) {
+//        
+//    }
+//    [super removeFromSuperview];
+//}
+//
+//- (RefreshHeaderView *)getRefreshHeaderView {
+//
+//    for (UIView *view in self.superview.subviews) {
+//        if ([view isKindOfClass:[RefreshHeaderView class]]) {
+//            return (RefreshHeaderView *)view;
+//        }
+//    }
+//    return nil;
+//}
 
 @end

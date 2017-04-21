@@ -11,8 +11,8 @@
 
 @interface ZhangLOLNetwork ()
 
-@property(nonatomic, strong)AFHTTPSessionManager *manager;
-
+@property(nonatomic, strong)AFHTTPSessionManager *httpManager;
+@property(nonatomic, strong)AFHTTPSessionManager *urlManager;
 @end
 
 static ZhangLOLNetwork *singleton;
@@ -24,10 +24,27 @@ static ZhangLOLNetwork *singleton;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         singleton = [[self alloc] init];
-        singleton.manager = [AFHTTPSessionManager manager];
-        singleton.manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"text/html",@"application/json", nil];
+        singleton.httpManager = [AFHTTPSessionManager manager];
+        singleton.httpManager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"text/html",@"application/json", nil];
+
+        
+        AFHTTPResponseSerializer *responseSerialier = [AFHTTPResponseSerializer serializer];
+        responseSerialier.acceptableContentTypes = [NSSet setWithObjects:@"text/html",@"application/json", nil];
+        singleton.urlManager = [AFHTTPSessionManager manager];
+        singleton.urlManager.responseSerializer = responseSerialier;
     });
     return singleton;
+}
+
++ (NSURLSessionDataTask *)HTML:(NSString *)URLString
+                            parameters:(id)parameters
+                              progress:(void (^)(NSProgress *downloadProgress))downloadProgress
+                               success:(void (^)(NSURLSessionDataTask *task, id  responseObject))success
+                               failure:(void (^)(NSURLSessionDataTask *task, NSError *error))failure {
+    
+    ZhangLOLNetwork *obj = [self singleton];
+    NSURLSessionDataTask *task = [obj.urlManager GET:URLString parameters:parameters progress:downloadProgress success:success failure:failure];
+    return task;
 }
 
 + (nullable NSURLSessionDataTask *)GET:(NSString *)URLString
@@ -36,7 +53,17 @@ static ZhangLOLNetwork *singleton;
                                success:(nullable void (^)(NSURLSessionDataTask *task, id _Nullable responseObject))success
                                failure:(nullable void (^)(NSURLSessionDataTask * _Nullable task, NSError *error))failure {
     ZhangLOLNetwork *obj = [self singleton];
-    NSURLSessionDataTask *task = [obj.manager GET:URLString parameters:parameters progress:downloadProgress success:success failure:failure];
+    NSURLSessionDataTask *task = [obj.httpManager GET:URLString parameters:parameters progress:downloadProgress success:success failure:failure];
+    return task;
+}
+
++ (NSURLSessionDownloadTask *)downloadTaskWithRequest:(NSURLRequest *)request
+                                             progress:(void (^)(NSProgress *downloadProgress))downloadProgressBlock
+                                          destination:(NSURL * (^)(NSURL *targetPath, NSURLResponse *response))destination
+                                    completionHandler:(void (^)(NSURLResponse *response, NSURL *  filePath, NSError * error))completionHandler {
+    ZhangLOLNetwork *obj = [self singleton];
+    NSURLSessionDownloadTask *task = [obj.httpManager downloadTaskWithRequest:request progress:downloadProgressBlock destination:destination completionHandler:completionHandler];
+    [task resume];
     return task;
 }
 

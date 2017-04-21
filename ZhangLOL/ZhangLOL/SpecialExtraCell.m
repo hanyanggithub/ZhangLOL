@@ -27,8 +27,6 @@
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        self.selectionStyle = UITableViewCellSelectionStyleNone;
-        self.backgroundColor = [UIColor clearColor];
         self.containerView = [[UIView alloc] initWithFrame:CGRectZero];
         self.containerView.backgroundColor = [UIColor whiteColor];
         self.containerView.layer.cornerRadius = 3;
@@ -44,6 +42,7 @@
         
         self.subTitle = [[UILabel alloc] initWithFrame:CGRectZero];
         self.subTitle.textColor = [UIColor grayColor];
+        self.subTitle.numberOfLines = 0;
         self.subTitle.font = [UIFont systemFontOfSize:13.0];
         
         self.time = [[UILabel alloc] initWithFrame:CGRectZero];

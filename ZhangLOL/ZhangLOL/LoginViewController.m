@@ -36,7 +36,7 @@
     
     if (self.isOriginImage) {
         self.originBg = [[UIView alloc] initWithFrame:CGRectMake(0, self.view.height * 0.75, self.view.width, self.view.height * 0.25)];
-        self.originBg.backgroundColor = [ImageBlur getImagePixelColorWithPoint:self.bgImage point:self.originBg.center];
+        self.originBg.backgroundColor = [ImageBlur getImagePixelColorWithPoint:self.bgImage point:CGPointMake(1, self.originBg.top + 1)];
         [self.bgImageView addSubview:self.originBg];
     }
     
@@ -148,8 +148,8 @@
 // 游客按钮点击
 - (void)touristBtnClicked {
     self.touristBtnArrow.highlighted = NO;
-    if ([self.delegate respondsToSelector:@selector(LoginViewControllerTouristPreview:)]) {
-        [self.delegate LoginViewControllerTouristPreview:self];
+    if ([self.delegate respondsToSelector:@selector(loginViewControllerTouristPreview:)]) {
+        [self.delegate loginViewControllerTouristPreview:self];
     }
 }
 // 游客按钮按下

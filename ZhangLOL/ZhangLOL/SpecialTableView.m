@@ -62,14 +62,10 @@
 }
 - (void)updateWithDataModels:(NSArray *)models dataInfo:(NSDictionary *)dataInfo {
     // 判断数据的变化(单个刷新单元格还是全刷)
-    if (dataInfo) {
-        self.dataInfo = dataInfo;
-        NSArray *allDataList = dataInfo[@"data"];
-        if (self.allDataList != allDataList) {
-            self.allDataList = allDataList;
-            [self reloadData];
-        }
+    if (self.allDataList == nil) {
+        self.allDataList = models;
     }
+    [self reloadData];
 }
 
 @end

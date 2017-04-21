@@ -26,8 +26,6 @@
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        self.selectionStyle = UITableViewCellSelectionStyleNone;
-        self.backgroundColor = [UIColor clearColor];
         self.containerView = [[UIView alloc] initWithFrame:CGRectZero];
         self.containerView.backgroundColor = [UIColor whiteColor];
         self.containerView.layer.cornerRadius = 3;
@@ -45,7 +43,7 @@
         self.author.font = [UIFont systemFontOfSize:11.0];
         
         self.booked = [[UILabel alloc] initWithFrame:CGRectZero];
-        self.booked.textColor = [UIColor orangeColor];
+        self.booked.textColor = MAIN_COLOR;
         self.booked.font = [UIFont systemFontOfSize:11.0];
         
         self.detail = [[UILabel alloc] initWithFrame:CGRectZero];
@@ -117,7 +115,7 @@
         }];
         [self.detail mas_makeConstraints:^(MASConstraintMaker *make) {
             make.left.equalTo(self.title);
-            make.right.equalTo(self.bookButton.mas_left);
+            make.right.equalTo(self.containerView).offset(-10.0);
             make.top.equalTo(self.booked.mas_bottom).offset(1.0);
             make.bottom.equalTo(self.containerView).offset(-5.0);
         }];
@@ -141,7 +139,7 @@
         if (/* DISABLES CODE */ (NO)) {
             self.booked.text = model.book_num;
         }else{
-            self.booked.text = [NSString stringWithFormat:@"%ldW人已订阅",model.book_num.integerValue / 10000];
+            self.booked.text = [NSString stringWithFormat:@"%dW人已订阅",model.book_num.intValue / 10000];
         }
         self.detail.text = model.col_des;
         

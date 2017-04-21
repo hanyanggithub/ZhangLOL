@@ -69,7 +69,7 @@
         
         [userMessageView mas_makeConstraints:^(MASConstraintMaker *make) {
             make.left.equalTo(self.bgImageView).offset(20);
-            make.top.equalTo(self.bgImageView).offset(60);
+            make.top.equalTo(self.bgImageView).offset(SCREEN_HEIGHT *0.08);
             make.height.equalTo(@(80));
             make.width.equalTo(@(80));
         }];
@@ -113,7 +113,7 @@
         [bkContainerView addSubview:bkTitle];
         
         [bkContainerView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.right.equalTo(self.bgImageView).offset(-60);
+            make.right.equalTo(self.bgImageView).offset(-self.bgImageView.width *0.2);
             make.centerY.equalTo(self.userIcon);
             make.height.equalTo(@(40));
             make.width.equalTo(@(60));
@@ -150,7 +150,7 @@
         
         [loginButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.left.equalTo(self.bgImageView).offset(20);
-            make.top.equalTo(self.bgImageView).offset(100);
+            make.top.equalTo(self.bgImageView).offset(SCREEN_HEIGHT *0.1);
             make.height.equalTo(@(40));
             make.width.equalTo(@(100));
         }];
@@ -185,7 +185,7 @@
         [bgButton addSubview:title];
         
         [bgButton mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.equalTo(self.bgImageView).offset(SCREEN_HEIGHT * 0.33 + i * 60);
+            make.top.equalTo(self.bgImageView).offset(SCREEN_HEIGHT * 0.25 + i * 60);
             make.left.equalTo(self.bgImageView);
             make.right.equalTo(self.bgImageView);
             make.height.equalTo(@(60));
@@ -224,7 +224,7 @@
     [settingContainView addSubview:stTitle];
     
     [settingContainView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.bottom.equalTo(self.bgImageView).offset(-40);
+        make.bottom.equalTo(self.bgImageView).offset(-SCREEN_HEIGHT *0.05);
         make.left.equalTo(self.bgImageView);
         make.width.equalTo(@(size.width + 60));
         make.height.equalTo(@(30));
@@ -267,7 +267,9 @@
     NSLog(@"%ld",tag);
 }
 - (void)loginButtonClicked {
-    NSLog(@"登录");
+    if ([self.delegate respondsToSelector:@selector(leftViewControllerLoginBtnClicked)]) {
+        [self.delegate leftViewControllerLoginBtnClicked];
+    }
 }
 - (void)settingClicked {
     NSLog(@"设置");

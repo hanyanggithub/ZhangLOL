@@ -27,7 +27,7 @@
         for (int i = 0; i < pages; i++) {
             UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(PAGR_CONTROLL_HEIGHT *i, 0, PAGR_CONTROLL_HEIGHT, PAGR_CONTROLL_HEIGHT)];
             UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"news_pagecontroller"] highlightedImage:[UIImage imageNamed:@"news_pagecontroller_hl"]];
-            imageView.frame = CGRectMake(0, 0, 12.0, 12.0);
+            imageView.frame = CGRectMake(0, 0, PAGR_CONTROLL_HEIGHT, PAGR_CONTROLL_HEIGHT);
             [self addSubview:containerView];
             [containerView addSubview:imageView];
             [self.imageViews addObject:imageView];

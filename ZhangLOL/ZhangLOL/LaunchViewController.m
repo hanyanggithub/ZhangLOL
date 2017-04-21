@@ -26,35 +26,32 @@
 }
 - (void)getLaunchImage {
     // 沙盒中获取图片
-    NSString *path = [NSString stringWithFormat:@"%@/Documents/",NSHomeDirectory()];
-    UIImage *image = [UIImage imageWithContentsOfFile:path];
-    CGFloat deviceHeight = 0;
-    if (image == nil) {
+    NSString *pathLaunch = [NSString stringWithFormat:@"%@/Documents/launch.png",NSHomeDirectory()];
+    NSString *pathLogin = [NSString stringWithFormat:@"%@/Documents/login.png",NSHomeDirectory()];
+    UIImage *imageLaunch = [UIImage imageWithContentsOfFile:pathLaunch];
+    UIImage *imageLogin = [UIImage imageWithContentsOfFile:pathLogin];
+    if (imageLaunch == nil) {
         // 获取开机图片
         if (IPHONE_4) {
-            image = [UIImage imageNamed:@"LaunchImage-700@2x"];
-            deviceHeight = IPHONE_4;
+            imageLaunch = [UIImage imageNamed:@"LaunchImage-700@2x"];
+    
         }else if (IPHONE_5) {
-            image = [UIImage imageNamed:@"LaunchImage-568h@2x"];
-            deviceHeight = IPHONE_5;
+            imageLaunch = [UIImage imageNamed:@"LaunchImage-700-568h@2x"];
+    
         }else if (IPHONE_6) {
-            image = [UIImage imageNamed:@"LaunchImage-800-667h@2x"];
-            deviceHeight = IPHONE_6;
+            imageLaunch = [UIImage imageNamed:@"LaunchImage-800-667h@2x"];
+    
         }else if (IPHONE_6P) {
-            image = [UIImage imageNamed:@"LaunchImage-800-Portrait-736h@3x"];
-            deviceHeight = IPHONE_6P;
+            imageLaunch = [UIImage imageNamed:@"LaunchImage-800-Portrait-736h@3x"];
+    
         }else{
-            deviceHeight = IPHONE_6;
+            imageLaunch = [UIImage imageNamed:@"LaunchImage-800-667h@2x"];
         }
-        self.launchImageInfo = @{@"isOriginImage":@(1),@"image":image};
+        self.launchImageInfo = @{@"isOriginImage":@(1),@"image":imageLaunch};
     }else{
-        self.launchImageInfo = @{@"isOriginImage":@(0),@"image":image};
+        self.launchImageInfo = @{@"isOriginImage":@(0),@"image":imageLogin};
     }
-    self.launchImageView.image = image;
-    // 远端获取最新开机图
-    [self requestNewstLaunchImageWithDeviceHeight:deviceHeight];
-}
-- (void)requestNewstLaunchImageWithDeviceHeight:(CGFloat)height {
+    self.launchImageView.image = imageLaunch;
     
 }
 
@@ -86,11 +83,11 @@
 #pragma mark - TencentSessionDelegate
 - (void)getUserInfoResponse:(APIResponse *)response {
     // 获取用户信息的回调
-    NSLog(@"%@",response.message);
+//    NSLog(@"%@",response.message);
     //    NSLog(@"%@",response.jsonResponse);
     // 处理信息返回
-    if ([self.delegate respondsToSelector:@selector(LaunchViewControllerJudgeLoginStateSucceed:)]) {
-        [self.delegate LaunchViewControllerJudgeLoginStateSucceed:response.jsonResponse];
+    if ([self.delegate respondsToSelector:@selector(launchViewControllerJudgeLoginStateSucceed:userInfo:)]) {
+        [self.delegate launchViewControllerJudgeLoginStateSucceed:self userInfo:response.jsonResponse];
     }
 }
 

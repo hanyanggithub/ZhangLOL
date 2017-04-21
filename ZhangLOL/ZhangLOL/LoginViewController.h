@@ -10,7 +10,7 @@
 @class LoginViewController;
 @protocol LoginViewControllerDelegate <NSObject>
 
-- (void)LoginViewControllerTouristPreview:(LoginViewController *)loginViewController;
+- (void)loginViewControllerTouristPreview:(LoginViewController *)loginViewController;
 
 @end
 

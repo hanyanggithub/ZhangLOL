@@ -65,4 +65,5 @@
 @property(nonatomic, copy)NSString *big_image_url;
 @property(nonatomic, copy)NSString *small_image_url;
 
+
 @end

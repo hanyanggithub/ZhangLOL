@@ -21,16 +21,24 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    UINavigationController *messgeNavi = [[UINavigationController alloc] initWithRootViewController:[[MessageViewController alloc] init]];
+    MessageViewController *message = [[MessageViewController alloc] init];
+    message.hidesBottomBarWhenPushed = NO;
+    UINavigationController *messgeNavi = [[UINavigationController alloc] initWithRootViewController:message];
     messgeNavi.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"资讯" image:[[UIImage imageNamed:@"tab_icon_news_normal"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] selectedImage:[[UIImage imageNamed:@"tab_icon_news_press"]imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     
-    UINavigationController *friendNavi = [[UINavigationController alloc] initWithRootViewController:[[FriendViewController alloc] init]];
+    FriendViewController *friend = [[FriendViewController alloc] init];
+    friend.hidesBottomBarWhenPushed = NO;
+    UINavigationController *friendNavi = [[UINavigationController alloc] initWithRootViewController:friend];
     friendNavi.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"好友" image:[[UIImage imageNamed:@"tab_icon_friend_normal"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] selectedImage:[[UIImage imageNamed:@"tab_icon_friend_press"]imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     
-    UINavigationController *discoverNavi = [[UINavigationController alloc] initWithRootViewController:[[DiscoverViewController alloc] init]];
+    DiscoverViewController *discover = [[DiscoverViewController alloc] init];
+    friend.hidesBottomBarWhenPushed = NO;
+    UINavigationController *discoverNavi = [[UINavigationController alloc] initWithRootViewController:discover];
     discoverNavi.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"发现" image:[[UIImage imageNamed:@"tab_icon_quiz_normal"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] selectedImage:[[UIImage imageNamed:@"tab_icon_quiz_press"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     
-    UINavigationController *meNavi = [[UINavigationController alloc] initWithRootViewController:[[MeViewController alloc] init]];
+    MeViewController *me = [[MeViewController alloc] init];
+    friend.hidesBottomBarWhenPushed = NO;
+    UINavigationController *meNavi = [[UINavigationController alloc] initWithRootViewController:me];
     meNavi.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"我" image:[[UIImage imageNamed:@"tab_icon_more_normal"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] selectedImage:[[UIImage imageNamed:@"tab_icon_more_press"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     self.viewControllers = @[messgeNavi,friendNavi,discoverNavi,meNavi];
     

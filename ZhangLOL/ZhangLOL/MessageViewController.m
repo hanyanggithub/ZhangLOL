@@ -14,6 +14,8 @@
 #import "MessageViewModel.h"
 #import "ChannelModel.h"
 #import "CacheManager.h"
+#import "SearchViewController.h"
+
 
 @interface MessageViewController ()<UITableViewDelegate,UITableViewDataSource,SWRevealViewControllerDelegate,MessageScrollViewDataSource,UINavigationControllerDelegate,UITabBarControllerDelegate>
 @property(nonatomic, strong)UIButton *menuButton;
@@ -34,6 +36,7 @@
 
 @implementation MessageViewController
 
+
 - (MessageViewModel *)viewModel {
     if (_viewModel == nil) {
         _viewModel = [[MessageViewModel alloc] init];
@@ -50,7 +53,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
     [self settingSWRevealViewController];
     [self createSubviews];
     [self layoutNavigationBar];
@@ -116,15 +118,16 @@
     [sw revealToggleAnimated:YES];
 }
 - (void)searchButtonClicked {
-    NSLog(@"搜索");
-    
+    SearchViewController *searchViewController = [[SearchViewController alloc] init];
+    searchViewController.viewModel = self.viewModel;
+    [self.navigationController pushViewController:searchViewController animated:YES];
 }
 
 - (void)createSubviews {
     
     self.tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, self.view.width, SCREEN_HEIGHT - TABBAR_HEIGHT) style:UITableViewStylePlain];
     self.tableView.showsVerticalScrollIndicator = NO;
-    self.tableView.rowHeight = SCREEN_HEIGHT - TABBAR_HEIGHT - CHANNELBAR_HEIGHT - NAVIBAR_HEIGHT;
+    self.tableView.rowHeight = SCREEN_HEIGHT - TABBAR_HEIGHT - CHANNELBAR_HEIGHT - NAVI_STATUS_BAR_HEIGHT;
     [self.view addSubview:self.tableView];
     
     self.channelView = [[ChannelView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.width, CHANNELBAR_HEIGHT)];
@@ -134,20 +137,15 @@
     self.channelView.delegate = (id<ChannelViewDelegate>)self.messageScrollView;
     self.messageScrollView.scrollDelegate = (id<MessageScrollViewDelegate>)self.channelView;
     self.messageScrollView.dataSource = self;
+    self.messageScrollView.viewModel = self.viewModel;
     
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     
-    self.refreshHeader = [[RefreshHeaderView alloc] initWithScrollView:self.tableView];
+    self.refreshHeader = [[RefreshHeaderView alloc] initWithScrollView:self.tableView location:RefreshHeaderViewLocationBottomEqualToScrollViewTop];
     __weak typeof(self) weakSelf = self;
     [self.refreshHeader refreshHeaderViewStatusChangedBlock:^(RefreshHeaderViewStatus status) {
-        if (status == RefreshHeaderViewStatusWaitScroll) {
-            
-        }else if (status == RefreshHeaderViewStatusScrolling) {
-            
-        }else if (status == RefreshHeaderViewStatusWaitLoosen) {
-            
-        }else{
+        if (status == RefreshHeaderViewStatusRefreshing){
             [weakSelf requestRecommendData];
             [weakSelf refreshDataForCurrentChannel];
         }
@@ -242,10 +240,12 @@
 - (void)requestNewestData {
     // 加载资讯页最新频道数据
     __weak typeof(self) weakSelf = self;
-    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[0] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
+    
+    ChannelModel *model = self.viewModel.channelModels[0];
+    
+    [self.viewModel requestDataWithChannelModel:model page:@"0" automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
         
         [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
-        ChannelModel *model = self.viewModel.channelModels[0];
         [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -254,32 +254,42 @@
     
 }
 
-- (void)requestSpecialData {
-    // 加载资讯页专栏频道数据
+- (void)requestOtherChannelData {
+    
     __weak typeof(self) weakSelf = self;
-    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[1] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
+    
+    for (int i = 1; i < self.viewModel.channelModels.count; i++) {
         
-        [weakSelf.messageScrollView updateTableViewsWithModels:nil index:1 info:[NSDictionary dictionaryWithObject:models forKey:@"data"]];
-        ChannelModel *model = self.viewModel.channelModels[1];
-        [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+        ChannelModel *model = self.viewModel.channelModels[i];
         
-    } failure:^(NSURLSessionDataTask *task, NSError *error) {
-        NSLog(@"%@",error);
-    }];
+        [self.viewModel requestDataWithChannelModel:model page:@"0" automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
+            // 设置初始数据页数
+            [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+            
+        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+            NSLog(@"%@",error);
+        }];
+    }
 }
 
 - (void)requestChannelData {
     // 频道
     __weak typeof(self) weakSelf = self;
     [self.viewModel requestChannelData:CHANNEL_URL success:^(NSURLSessionDataTask *task, NSArray *models) {
+        
+        NSMutableArray *channelData = [NSMutableArray arrayWithArray:weakSelf.viewModel.channelModels];
+        // 移除赛事和视频
+        [channelData removeObjectAtIndex:2];
+        [channelData removeObjectAtIndex:2];
         // 显示频道信息
-        [weakSelf.channelView updateWithChannelModels:weakSelf.viewModel.channelModels];
+        [weakSelf.channelView updateWithChannelModels:channelData];
+        // 设置messageScrollView最大频道数
         weakSelf.messageScrollView.allChannelCount = [weakSelf.channelView channelCount];
-        // 加载最新和专题
+        // 请求资讯页最新频道数据
         [weakSelf requestNewestData];
-        [weakSelf requestSpecialData];
-        // 加载其他
+        // 请求资讯页其他频道数据
         [weakSelf requestOtherChannelData];
+        
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         NSLog(@"%@",error);
     }];
@@ -290,7 +300,7 @@
     // 顶部vendor
     __weak typeof(self) weakSelf = self;
     [self.viewModel requestRecommendData:RENCOMMEND_URL success:^(NSURLSessionDataTask *task, NSArray *models) {
-        // 显示频道信息
+        // 显示轮播图
         [weakSelf.recommendView updateWithModels:models];
         // 如果是下拉刷新触发的结束刷新
         [weakSelf.refreshHeader stopRefreshing];
@@ -301,28 +311,11 @@
 
 }
 
--(void)requestOtherChannelData {
-    for (int i = 2; i < self.viewModel.channelModels.count; i++) {
-        ChannelModel *model = self.viewModel.channelModels[i];
-        [self.viewModel requestDataWithChannelModel:model page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
-            
-        } failure:^(NSURLSessionDataTask *task, NSError *error) {
-            NSLog(@"%@",error);
-        }];
-    }
-}
-
 - (void)refreshDataForCurrentChannel {
     // 刷新资讯页当前显示的频道数据
     __weak typeof(self) weakSelf = self;
-    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[self.messageScrollView.currentIndex] page:@"0" automaticMerge:NO success:^(ChannelModel *channelModel, NSArray *models) {
-        if (self.messageScrollView.currentIndex == 1) {
-            [weakSelf.messageScrollView updateTableViewsWithModels:nil index:1 info:[NSDictionary dictionaryWithObject:models forKey:@"data"]];
-        }else{
-            [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
-        }
-        ChannelModel *model = self.viewModel.channelModels[self.messageScrollView.currentIndex];
-        [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[self.messageScrollView.currentIndex] page:@"0" automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
+        [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
         [weakSelf.refreshHeader stopRefreshing];
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -333,22 +326,20 @@
 
 
 #pragma mark - UINavigationControllerDelegate
-
-- (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
-    
-    if ([viewController isKindOfClass:NSClassFromString(@"MessgeDetailController")]) {
+- (void)navigationController:(UINavigationController *)navigationController didShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    if (viewController != self && self.revealViewController.panGestureRecognizer.enabled) {
         // 禁用侧滑
         self.revealViewController.panGestureRecognizer.enabled = NO;
-        // 隐藏返回按钮
-        viewController.navigationItem.hidesBackButton = YES;
-        // 开启返回显示tabbar
-        self.hidesBottomBarWhenPushed = NO;
-        
     }
-    if (viewController == self) {
+    if (viewController == self && !self.revealViewController.panGestureRecognizer.enabled) {
         // 开启侧滑
         self.revealViewController.panGestureRecognizer.enabled = YES;
     }
+    
+//    if ([viewController isMemberOfClass:[SearchViewController class]]) {
+//        // .m扩展中的属性居然可以直接引用(目测是因为有这个系统属性所以可以)，xcode——bug
+//        [viewController.inputView becomeFirstResponder];
+//    }
 }
 
 #pragma mark - UITableViewDelegate
@@ -408,28 +399,36 @@
 }
 
 #pragma mark - MessageScrollViewDataSource
-
 - (void)messageScrollViewWillShowTableViewWithIndex:(NSInteger)index {
-    if (index > 1) {
+    ChannelModel *model = nil;
+    if (index <= 1) {
+        model = self.viewModel.channelModels[index];
         
-        ChannelModel *model = self.viewModel.channelModels[index];
-        [self.messageScrollView updateTableViewsWithModels:self.viewModel.allChannelsModelDic[model.channel_id] index:index info:nil];
+    }else if (index > 1) {
+        // 跳过视频和赛事模型
+        model = self.viewModel.channelModels[index+2];
     }
+    // 获取数据
+    NSArray *models = self.viewModel.allChannelsModelDic[model.channel_id];
+    // 刷新表视图
+    [self.messageScrollView updateTableViewsWithModels:models index:index info:nil];
 }
 
 - (void)messageScrollViewSubTableViewShouldLoadMoreDataWithIndex:(NSInteger)index {
     self.isLoadingMore = YES;
     // 获取当前页数
-    ChannelModel *model = self.viewModel.channelModels[index];
+    ChannelModel *model = nil;
+    if (index <= 1) {
+        model = self.viewModel.channelModels[index];
+    }else{
+        model = self.viewModel.channelModels[index + 2];
+    }
+    
     NSString *currentPage = [self.everyChannelPages objectForKey:model.channel_id];
-    NSString *page = [NSString stringWithFormat:@"%ld",currentPage.integerValue + 1];
+    NSString *page = [NSString stringWithFormat:@"%d",currentPage.intValue + 1];
     __weak typeof(self) weakSelf = self;
     [self.viewModel requestDataWithChannelModel:model page:page automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
-        if ([model.chnl_type isEqualToString:@"col"]) {
-            [weakSelf.messageScrollView updateTableViewsWithModels:nil index:index info:@{@"data":models}];
-        }else{
-            [weakSelf.messageScrollView updateTableViewsWithModels:models index:index info:nil];
-        }
+        [weakSelf.messageScrollView updateTableViewsWithModels:models index:index info:nil];
         [weakSelf.everyChannelPages setObject:page forKey:model.channel_id];
         weakSelf.isLoadingMore = NO;
     } failure:^(NSURLSessionDataTask *task, NSError *error) {

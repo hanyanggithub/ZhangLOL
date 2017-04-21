@@ -10,6 +10,7 @@
 #import "ChannelModel.h"
 #import "MessageScrollView.h"
 
+#define CHANNELBAR_TAB_MIN_WIDTH   (SCREEN_WIDTH / CHANNELBAR_MAX_TAB_COUNT)
 
 @interface ChannelView ()<MessageScrollViewDelegate>
 @property(nonatomic, strong)NSMutableArray<UILabel *> *labels;
@@ -20,6 +21,7 @@
 @end
 
 @implementation ChannelView
+
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -47,44 +49,62 @@
     // 创建
     if (self.labels.count == 0) {
         CGFloat tabWidth = 0;
-        if (models.count < 5) {
+        if (models.count < CHANNELBAR_MAX_TAB_COUNT) {
             tabWidth = SCREEN_WIDTH / models.count;
         }else{
-            tabWidth = TAB_MIN_WIDTH;
+            tabWidth = CHANNELBAR_TAB_MIN_WIDTH;
         }
         self.scrollView.contentSize = CGSizeMake(tabWidth * models.count, self.height);
         for (int i = 0; i < models.count; i++) {
             UIControl *tabContainer = [[UIControl alloc] initWithFrame:CGRectMake(i * tabWidth, 0, tabWidth, CHANNELBAR_HEIGHT)];
             [tabContainer addTarget:self action:@selector(clickedTab:) forControlEvents:UIControlEventTouchUpInside];
-            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(tabContainer.width * 0.25, tabContainer.height * 0.25, tabContainer.width * 0.5, tabContainer.height * 0.5)];
+            UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(tabContainer.width * 0.2, tabContainer.height * 0.25, tabContainer.width * 0.6, tabContainer.height * 0.5)];
             label.textColor = [UIColor blackColor];
             label.textAlignment = NSTextAlignmentCenter;
-            label.font = [UIFont systemFontOfSize:17.0];
-            ChannelModel *model = models[i];
-            label.text = model.name;
+            label.font = [UIFont systemFontOfSize:CHANNELBAR_LABEL_FONT_SIZE];
+            // 类型image
+            UIImageView *rightImageView = [[UIImageView alloc] initWithFrame:CGRectMake(label.right, label.top - 6, 20, 12)];
+            rightImageView.hidden = YES;
             [self.scrollView addSubview:tabContainer];
             [tabContainer addSubview:label];
+            [tabContainer addSubview:rightImageView];
             [self.labels addObject:label];
         }
     }
-    // 设置值
-    if (models.count == self.labels.count) {
+    
+    // 设置内容
+    if (models.count <= self.labels.count) {
         for (int i = 0; i < models.count; i++) {
             UILabel *label = self.labels[i];
             ChannelModel *model = models[i];
             label.text = model.name;
+            CGSize labelSize = [label sizeThatFits:CGSizeMake(0, label.height)];
+            CGFloat containerViewWidth = label.superview.width;
+            UIImageView *imageView = [label.superview.subviews lastObject];
+            if (labelSize.width < containerViewWidth * 0.6) {
+                // 调整label
+                label.frame = CGRectMake((containerViewWidth - labelSize.width) * 0.5, label.top, labelSize.width, label.height);
+                // 类型image
+                imageView.frame = CGRectMake(label.right, label.top - 6, 20, 12);
+            }
             if (i == self.currentIndex) {
                 label.textColor = MAIN_COLOR;
             }
+            if ([model.shownew isEqualToString:@"1"]) {
+                imageView.image = [UIImage imageNamed:@"locate_view_attached_new"];
+                imageView.hidden = NO;
+            }
+            if ([model.showhot isEqualToString:@"1"]) {
+                imageView.image = [UIImage imageNamed:@"locate_view_attached_hot"];
+                imageView.hidden = NO;
+            }
         }
+        // 设置indicator
+        UILabel *label = [self.labels firstObject];
+        self.indicator.frame = CGRectMake(label.left, label.bottom + 2, label.width, label.width/78.0 *11.0);
+        self.indicator.hidden = NO;
+        [self.scrollView bringSubviewToFront:self.indicator];
     }
-    // 设置indicator
-    UILabel *label = [self.labels firstObject];
-    self.indicator.frame = CGRectMake(label.left, label.bottom, label.width, label.width/78.0 *11.0);
-    self.indicator.hidden = NO;
-    [self.scrollView bringSubviewToFront:self.indicator];
-    
-    
 }
 
 - (void)clickedTab:(UIControl *)tabContainer {

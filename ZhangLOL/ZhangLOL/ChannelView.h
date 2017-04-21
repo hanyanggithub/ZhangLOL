@@ -7,9 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#define MAX_TAB_COUNT 5
-#define TAB_MIN_WIDTH (SCREEN_WIDTH / MAX_TAB_COUNT)
-#define CHANNELBAR_HEIGHT 44.0
 
 
 @protocol ChannelViewDelegate <NSObject>

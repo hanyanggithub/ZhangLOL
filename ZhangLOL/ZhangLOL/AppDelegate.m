@@ -13,42 +13,97 @@
 
 #define LEFT_VIEW_WIDTH (SCREEN_WIDTH * 0.8)
 
-@interface AppDelegate ()<LaunchViewControllerDelegate,LoginViewControllerDelegate>
+@interface AppDelegate ()<LaunchViewControllerDelegate,LoginViewControllerDelegate,LeftViewControllerDelegate>
+
+@property(nonatomic, strong)SWRevealViewController *drawer;
+@property(nonatomic, strong)UINavigationController *launchNavi;
 
 @end
 
 @implementation AppDelegate
-
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    _window.backgroundColor = [UIColor whiteColor];
-    LaunchViewController *launchViewController = [[LaunchViewController alloc] init];
-    launchViewController.delegate = self;
-    UINavigationController *launchNavi = [[UINavigationController alloc] initWithRootViewController:launchViewController];
-    _window.rootViewController = launchNavi;
-    [_window makeKeyAndVisible];
+- (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // 下载开机图和启动图
+    [self downloadLaunchImage];
     return YES;
 }
 
-- (void)installContentModules {
-    TabBarController *tabBarContr = [[TabBarController alloc] init];
-    LeftViewController *left = [[LeftViewController alloc] init];
-    left.userInfo = self.userInfo;
-    SWRevealViewController *drawer = [[SWRevealViewController alloc] initWithRearViewController:left frontViewController:tabBarContr];
-    drawer.rearViewRevealWidth = LEFT_VIEW_WIDTH;
-    drawer.bounceBackOnOverdraw = NO;
-    drawer.rearViewRevealOverdraw = 0;
-    drawer.toggleAnimationType = SWRevealToggleAnimationTypeSpring;
-    drawer.springDampingRatio = 0.8;
-    self.window.rootViewController = drawer;
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    //设置状态栏字体颜色
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
+    _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    _window.backgroundColor = [UIColor whiteColor];
+    [self installLaunchModules];
+    [_window makeKeyAndVisible];
+    return YES;
 }
-- (void)LaunchViewControllerJudgeLoginStateSucceed:(NSDictionary *)userInfo {
+- (void)downloadLaunchImage {
+    // 请求开机图
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:LAUNCH_IMAGE_URL]];
+    [ZhangLOLNetwork downloadTaskWithRequest:request progress:^(NSProgress *downloadProgress){
+    } destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+        NSString *path = [NSString stringWithFormat:@"file://%@/Documents/launch.png",NSHomeDirectory()];
+        NSURL *url = [NSURL URLWithString:path];
+        return url;
+    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+        if (error) {
+            NSLog(@"%@",error);
+        }
+    }];
+    // 请求登录bg
+    request = [NSURLRequest requestWithURL:[NSURL URLWithString:LOGIN_IMAGE_URL]];
+    [ZhangLOLNetwork downloadTaskWithRequest:request progress:^(NSProgress *downloadProgress){
+    } destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+        NSString *path = [NSString stringWithFormat:@"file://%@/Documents/login.png",NSHomeDirectory()];
+        NSURL *url = [NSURL URLWithString:path];
+        return url;
+    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+        if (error) {
+            NSLog(@"%@",error);
+        }
+    }];
+}
+- (void)installLaunchModules {
+    if (self.launchNavi == nil) {
+        LaunchViewController *launchViewController = [[LaunchViewController alloc] init];
+        launchViewController.delegate = self;
+        self.launchNavi = [[UINavigationController alloc] initWithRootViewController:launchViewController];
+    }
+    self.window.rootViewController = self.launchNavi;
+}
+
+- (void)installContentModules {
+    if (self.drawer == nil) {
+        TabBarController *tabBarContr = [[TabBarController alloc] init];
+        LeftViewController *left = [[LeftViewController alloc] init];
+        left.delegate = self;
+        left.userInfo = self.userInfo;
+        self.drawer = [[SWRevealViewController alloc] initWithRearViewController:left frontViewController:tabBarContr];
+        self.drawer.rearViewRevealWidth = LEFT_VIEW_WIDTH;
+        self.drawer.bounceBackOnOverdraw = NO;
+        self.drawer.rearViewRevealOverdraw = 0;
+        self.drawer.toggleAnimationType = SWRevealToggleAnimationTypeSpring;
+        self.drawer.springDampingRatio = 0.8;
+    }
+    
+    if (self.drawer.frontViewPosition == FrontViewPositionRight) {
+        [self.drawer revealToggleAnimated:NO];
+    }
+    self.window.rootViewController = self.drawer;
+}
+- (void)launchViewControllerJudgeLoginStateSucceed:(LaunchViewController *)launchViewController userInfo:(NSDictionary *)userInfo {
     self.userInfo = userInfo;
+    // 显示内容模块
     [self installContentModules];
 }
 
-- (void)LoginViewControllerTouristPreview:(LoginViewController *)loginViewController {
+- (void)loginViewControllerTouristPreview:(LoginViewController *)loginViewController {
+    // 显示内容模块
     [self installContentModules];
+}
+
+- (void)leftViewControllerLoginBtnClicked {
+    // 显示启动登录模块
+    [self installLaunchModules];
 }
 
 // 8
@@ -93,7 +148,7 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    NSLog(@"将要变的活跃");
+//    NSLog(@"将要变的活跃");
 }
 
 

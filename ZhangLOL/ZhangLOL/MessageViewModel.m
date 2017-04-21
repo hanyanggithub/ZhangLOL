@@ -57,9 +57,6 @@
             ChannelModel *model = [[ChannelModel alloc] initWithDic:dic];
             [self.channelModels addObject:model];
         }
-        // test
-//        [self.channelModels removeObjectAtIndex:2];
-//        [self.channelModels removeObjectAtIndex:2];
         NSArray *newArray = [NSArray arrayWithArray:self.channelModels];
         successHandler(task,newArray);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -98,6 +95,18 @@
     NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     NSString *url = nil;
     if ([channelModel.chnl_type isEqualToString:@"col"]) {
+        if (page.integerValue != 0) {
+            // 判断是否可以加载更多
+            NSMutableArray *originData = [self.allChannelsModelDic objectForKey:channelModel.channel_id];
+            if (originData) {
+                NSArray *any = [originData lastObject];
+                SpecialModel *specialModel = [any lastObject];
+                if (!specialModel.hasnext) {
+                    return nil;
+                }
+            }
+        }
+        
         // 专题类型
         url = MESSAGE_SPECIAL_PATH;
         [parameters setObject:@"9681" forKey:@"version"];
@@ -112,22 +121,41 @@
     
     NSURLSessionDataTask *task = [ZhangLOLNetwork GET:url parameters:parameters progress:^(NSProgress *downloadProgress) {
     } success:^(NSURLSessionDataTask *task, id responseObject) {
+        // 处理数据
         NSMutableArray *arrays = [self dealDataWithResponseObject:responseObject channelModel:channelModel];
+        // 是否合并
         if (merge) {
-            NSMutableArray *mergedArrays = [self splitDataModelArray:channelModel newModels:arrays];
+            // 数据合并处理
+            NSMutableArray *mergedArrays = nil;
+            if (page.intValue == 0) {
+                // 刷新或者是首次请求
+                mergedArrays = [self mergeModelDataArrayWithChannelModel:channelModel newModels:arrays isFront:YES];
+            }else{
+                // 加载更多数据
+                mergedArrays = [self mergeModelDataArrayWithChannelModel:channelModel newModels:arrays isFront:NO];
+            }
             if (mergedArrays) {
                 arrays = mergedArrays;
             }
+            // 数据备份
+            [self.allChannelsModelDic setObject:arrays forKey:channelModel.channel_id];
         }
-        [self.allChannelsModelDic setObject:arrays forKey:channelModel.channel_id];
-        NSArray *newArray = [NSArray arrayWithArray:arrays];
-        successHandler(channelModel,newArray);
+        // 返回上层
+        successHandler(channelModel,arrays);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         failureHandler(task,error);
     }];
     return task;
 }
 
+
+/**
+ 数据解析
+
+ @param responseObject 服务器返回的json
+ @param model 频道模型
+ @return result
+ */
 - (NSMutableArray *)dealDataWithResponseObject:(id)responseObject channelModel:(ChannelModel *)model {
     NSMutableArray *arrays = [NSMutableArray array];
     if ([model.chnl_type isEqualToString:@"col"]) {
@@ -178,25 +206,67 @@
 
  @param model 当前频道的模型
  @param array 新的模型数组
+ @param front 是否在前边拼接
  @return 拼接完成的数组
  */
-- (NSMutableArray *)splitDataModelArray:(ChannelModel *)model newModels:(NSMutableArray *)array {
-    // 二维数组
+- (NSMutableArray *)mergeModelDataArrayWithChannelModel:(ChannelModel *)model newModels:(NSMutableArray *)array isFront:(BOOL)front {
+    // 获取原数据
     NSMutableArray *originData = [self.allChannelsModelDic objectForKey:model.channel_id];
+    
     if (originData) {
-        if ([model.chnl_type isEqualToString:@"col"]) {
-            for (NSMutableArray *subArray in array) {
-                NSInteger index = [array indexOfObject:subArray];
-                ;
-                NSMutableArray *originSubData = originData[index];
-                [originSubData addObjectsFromArray:subArray];
+        if (!front) {
+            
+            if ([model.chnl_type isEqualToString:@"col"]) {
+                for (NSMutableArray *subArray in array) {
+                    NSInteger index = [array indexOfObject:subArray];
+                    ;
+                    NSMutableArray *originSubData = originData[index];
+                    [originSubData addObjectsFromArray:subArray];
+                }
+            }else{
+                // 1.替换本地点击过的cellModel
+                NSMutableArray *disposedArray = [self disposeModels:array];
+                // 2.拼接
+                [originData addObjectsFromArray:disposedArray];
             }
         }else{
-            // 1.去重
-            NSMutableArray *disposedArray = [self disposeModels:array];
-            // 2.拼接
-            [originData addObjectsFromArray:disposedArray];
+            
+            if ([model.chnl_type isEqualToString:@"col"]) {
+                for (NSMutableArray *subArray in array) {
+                    NSInteger index = [array indexOfObject:subArray];
+                    ;
+                    NSMutableArray *originSubData = originData[index];
+                    
+                    // 获取原数据中时间结点最后的一条
+                    SpecialModel *orgNewetModel = [originSubData firstObject];
+                    for (NSInteger i = subArray.count -1; i < subArray.count; i--) {
+                        SpecialModel *everyNewModel = subArray[i];
+                        // 比较顺序
+                        int oldT = [self getTimeIntervalSinceNow:orgNewetModel.last_update];
+                        int newT = [self getTimeIntervalSinceNow:everyNewModel.last_update];
+                        if (newT < oldT) {
+                            [originSubData insertObject:everyNewModel atIndex:0];
+                        }
+                    }
+                }
+            }else{
+                SmallCellModel *orgNewetModel = [originData firstObject];
+                for (NSInteger i = array.count -1; i < array.count; i--) {
+                    SmallCellModel *everyNewModel = array[i];
+                    // 比较顺序
+                    int oldT = [self getTimeIntervalSinceNow:orgNewetModel.publication_date];
+                    int newT = [self getTimeIntervalSinceNow:everyNewModel.publication_date];
+                    if (newT < oldT) {
+                        [originData insertObject:everyNewModel atIndex:0];
+                    }
+                }
+                // 1.替换本地点击过的cellModel
+                originData = [self disposeModels:originData];
+                
+            }
+            
         }
+        
     }
     return originData;
 }
@@ -208,12 +278,12 @@
  @return 去重后的模型
  */
 - (NSMutableArray *)disposeModels:(NSMutableArray *)models {
+    // 过滤标记态
     if (self.tagedModels != nil) {
         for (SmallCellModel *model_new in models) {
             for (SmallCellModel *model_taged in self.tagedModels) {
                 if ([model_new.article_id isEqualToString:model_taged.article_id]) {
-                    NSInteger index = [models indexOfObject:model_new];
-                    [models replaceObjectAtIndex:index withObject:model_taged];
+                    model_new.isRead = YES;
                 }
             }
         }
@@ -222,8 +292,20 @@
 }
 
 - (void)saveModelTag:(SmallCellModel *)model {
-    if (model) {
+    if (model && model.isRead == NO) {
+        model.isRead = YES;
         [self.tagedModels addObject:model];
+        // 遍历已缓存的model
+        for (NSArray *array in self.allChannelsModelDic.allValues) {
+            id frist = [array firstObject];
+            if ([frist isKindOfClass:[SmallCellModel class]]) {
+                for (SmallCellModel *emodel in array) {
+                    if ([model.article_id isEqualToString:emodel.article_id]) {
+                        emodel.isRead = YES;
+                    }
+                }
+            }
+        }
     }
 }
 - (void)removeModelTag:(SmallCellModel *)model {
@@ -232,14 +314,13 @@
     }
 }
 
-- (void)freeData {
-    self.channelModels = nil;
-    self.rencommendModels = nil;
-    self.allChannelsModelDic = nil;
-    self.tagedModels = nil;
+- (int)getTimeIntervalSinceNow:(NSString *)dateStr {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+    NSDate *pub_date = [formatter dateFromString:dateStr];
+    int p = ABS(pub_date.timeIntervalSinceNow);
+    return p;
 }
-- (NSDictionary *)getAllChannelsModelDic {
-    return self.allChannelsModelDic;
-}
+
 
 @end

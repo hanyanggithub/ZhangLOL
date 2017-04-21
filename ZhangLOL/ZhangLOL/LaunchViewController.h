@@ -9,9 +9,10 @@
 #import "BaseViewController.h"
 #import "LoginViewController.h"
 
+@class LaunchViewController;
 @protocol LaunchViewControllerDelegate <NSObject>
 
-- (void)LaunchViewControllerJudgeLoginStateSucceed:(NSDictionary *)userInfo;
+- (void)launchViewControllerJudgeLoginStateSucceed:(LaunchViewController *)launchViewController userInfo:(NSDictionary *)userInfo;
 
 @end
 

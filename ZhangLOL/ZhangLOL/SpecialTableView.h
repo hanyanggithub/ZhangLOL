@@ -9,5 +9,5 @@
 #import "BaseTableView.h"
 
 @interface SpecialTableView : BaseTableView
-@property(nonatomic, strong)NSArray<NSArray *> *allDataList;
+@property(nonatomic, weak)NSArray<NSArray *> *allDataList;
 @end

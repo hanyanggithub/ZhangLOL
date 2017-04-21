@@ -126,7 +126,7 @@
     for (int i = 0; i < array.count; i++) {
         RencommendModel *model = array[i];
         UIImageView *imageView = self.imagesViews[i];
-        [imageView sd_setImageWithURL:[NSURL URLWithString:model.image_url_big] placeholderImage:[UIImage imageNamed:@"hero_detail_head_default"] options:SDWebImageProgressiveDownload];
+        [imageView sd_setImageWithURL:[NSURL URLWithString:model.image_url_big] placeholderImage:[UIImage imageNamed:@"hero_detail_head_default"] options:SDWebImageRetryFailed|SDWebImageProgressiveDownload];
     }
     self.scrollView.contentOffset = CGPointMake(self.scrollView.width, 0);
     [self.pageControll setIndex:0];
@@ -141,8 +141,8 @@
     if (image == nil) {
         image = [[SDImageCache sharedImageCache] imageFromDiskCacheForKey:model.image_url_big];
     }
-    image = [ImageBlur reSizeImage:image toSize:CGSizeMake(375 * SCREEN_SCALE, 375 * SCREEN_SCALE * 0.5)];
-    image = [ImageBlur clipImageWithImage:image inRect:CGRectMake(0, image.size.height - 64, image.size.width, 64)];
+    image = [ImageBlur reSizeImage:image toSize:CGSizeMake(SCREEN_WIDTH, SCREEN_WIDTH * 0.5)];
+    image = [ImageBlur clipImageWithImage:image inRect:CGRectMake(0, image.size.height - NAVI_STATUS_BAR_HEIGHT, image.size.width, NAVI_STATUS_BAR_HEIGHT)];
     image = [ImageBlur gaussBlurWithLevel:1.0 image:image];
     return image;
 }
@@ -159,7 +159,6 @@
     }
     MessgeDetailController *detail = [MessgeDetailController new];
     detail.vendorModel = model;
-    [self viewController].hidesBottomBarWhenPushed = YES;
     [self.viewController.navigationController pushViewController:detail animated:YES];
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -207,7 +206,9 @@
 
 - (void)timerAction {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x + self.scrollView.width, 0) animated:YES];
+        if (self.window) {
+            [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x + self.scrollView.width, 0) animated:YES];
+        }
     });
 }
 

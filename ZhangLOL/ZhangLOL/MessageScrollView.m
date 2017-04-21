@@ -10,19 +10,42 @@
 #import "NewestTableView.h"
 #import "SpecialTableView.h"
 #import "MessgeDetailController.h"
+#import "ImageBrowserController.h"
 #import "ChannelView.h"
 #import "CacheManager.h"
-@interface MessageScrollView ()<UITableViewDelegate,UIGestureRecognizerDelegate,ChannelViewDelegate>
+#import "HoverView.h"
+#import "MessageViewModel.h"
+#import "SmallCellModel.h"
+
+@interface MessageScrollView ()<UITableViewDelegate,ChannelViewDelegate> {
+    NSMutableArray * _reusableTables;
+}
 @property(nonatomic, strong)NSArray *classArray;
-@property(nonatomic, strong)NSMutableArray *reusableTables; // 可复用表视图
 @property(nonatomic, strong)NSMutableArray *tableViews;     // 所有的子视图
+@property(nonatomic, strong)HoverView *suspendView;
 @property(nonatomic, assign)CGPoint priorPoint;
 @property(nonatomic, assign)BOOL isScrolling;
 @end
 
 @implementation MessageScrollView
 
+- (HoverView *)suspendView {
+    if (_suspendView == nil) {
+        _suspendView = [[HoverView alloc] initWithFrame:CGRectMake(0, 0, self.width, HOVER_VIEW_HEIGHT)];
+        NSArray *array = [NSArray arrayWithObjects:self.viewModel.channelModels[2],self.viewModel.channelModels[3], nil];
+        [_suspendView updateWithModels:array];
+        _suspendView.hidden = YES;
+        [self addSubview:_suspendView];
+    }
+    return _suspendView;
+}
 
+- (NSMutableArray *)reusableTables {
+    if (_reusableTables == nil) {
+        _reusableTables = [NSMutableArray array];
+    }
+    return _reusableTables;
+}
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -30,6 +53,8 @@
         [self createFirstTwoTableViews];
         self.currentIndex = 0;
         self.pagingEnabled = YES;
+        self.showsHorizontalScrollIndicator = NO;
+        self.showsVerticalScrollIndicator = NO;
         self.delegate = self;
     }
     return self;
@@ -81,6 +106,14 @@
     if (index < self.tableViews.count) {
         BaseTableView *tableView = self.tableViews[index];
         [tableView updateWithDataModels:models dataInfo:info];
+        if (index == 0) {
+            HoverView *hoverView = [[HoverView alloc] initWithFrame:CGRectMake(0, 0, tableView.width, HOVER_VIEW_HEIGHT)];
+            NSArray *array = [NSArray arrayWithObjects:self.viewModel.channelModels[2],self.viewModel.channelModels[3], nil];
+            [hoverView updateWithModels:array];
+            tableView.tableHeaderView = hoverView;
+        }
+        
+        
     }else{
         // 判断是否有
     }
@@ -98,12 +131,24 @@
         if (messageTableView.contentOffset.y < RECOMMEND_VIEW_HEIGHT - 64) {
             scrollView.contentOffset = CGPointMake(0, 0);
         }
+        
+        // 隐藏
+        if (!self.suspendView.isHidden) {
+            self.suspendView.hidden = YES;
+        }
     }
     // 2.2 向下滑
     if (scrollDirection == UIScrollViewScrollDirectionDown) {
         if (scrollView.contentOffset.y < 0) {
             scrollView.contentOffset = CGPointMake(0, 0);
         }
+        // 显示
+        if (scrollView.contentOffset.y > 64) {
+            if (self.suspendView.isHidden) {
+               self.suspendView.hidden = NO;
+            }
+        }
+        
     }
 }
 
@@ -184,22 +229,29 @@
 - (void)subTableShowJudge {
     UIScrollViewScrollDirection scrollDirection = [self scrollDirectionWithCurrentPoint:self.contentOffset];
     if (!self.isScrolling && scrollDirection == UIScrollViewScrollDirectionRight) {
-        NSLog(@"开始向右滑动");
         self.isScrolling = YES;
         if (self.currentIndex > 0) {
             [self willShowTableViewWithIndex:self.currentIndex - 1];
         }
     }
     if (!self.isScrolling && scrollDirection == UIScrollViewScrollDirectionLeft) {
-        NSLog(@"开始向左滑动");
         self.isScrolling = YES;
         if (self.allChannelCount > self.currentIndex + 1) {
             [self willShowTableViewWithIndex:self.currentIndex + 1];
         }
     }
 }
+
+- (void)stopDrawerGesture {
+    SWRevealViewController *drawer = [self.viewController revealViewController];
+    drawer.panGestureRecognizer.enabled = NO;
+}
+- (void)startDrawerGesture {
+    SWRevealViewController *drawer = [self.viewController revealViewController];
+    drawer.panGestureRecognizer.enabled = YES;
+
+}
 #pragma mark - 将要显示新的表视图方法调用
-// TODO 解决复用
 - (void)willShowTableViewWithIndex:(NSInteger)index {
     // 判断是否需要创建
     if (index >= self.tableViews.count) {
@@ -220,6 +272,27 @@
     }
 }
 
+- (void)dealReusableTablesView:(NSInteger)index {
+ 
+    for (UITableView *tableView in self.tableViews) {
+        
+        if ([tableView isKindOfClass:[NewestTableView class]]) {
+            
+            NSInteger tbIndex = [self.tableViews indexOfObject:tableView];
+            
+            // remove
+            if (tbIndex == index && [self.reusableTables containsObject:tableView]) {
+                [self.reusableTables removeObject:tableView];
+            }
+            // add
+            if (tbIndex != index && ![self.reusableTables containsObject:tableView]) {
+                [self.reusableTables addObject:tableView];
+            }
+        }
+        
+    }
+}
+
 #pragma mark - 子视图切换时将上一个显示的表视图contentOffset.x至为0
 - (void)resetSubPriorTableViewContentOffset {
     NSInteger index = self.contentOffset.x / self.width;
@@ -228,6 +301,7 @@
         priorTableView.contentOffset = CGPointMake(0, 0);
     }
     self.currentIndex = index;
+    [self dealReusableTablesView:index];
     if ([self.scrollDelegate respondsToSelector:@selector(messageScrollViewScrolledIndex:)]) {
         [self.scrollDelegate messageScrollViewScrolledIndex:index];
     }
@@ -239,6 +313,7 @@
         [self willShowTableViewWithIndex:index];
         [self setContentOffset:CGPointMake(self.width * index, 0) animated:NO];
         self.currentIndex = index;
+        [self dealReusableTablesView:index];
     }
 }
 #pragma mark - UIScrollViewDelegate
@@ -262,16 +337,19 @@
     }
 }
 
-- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
-    if (scrollView == self) {
-        [self resetSubPriorTableViewContentOffset];
-        self.isScrolling = NO;
-    }
-}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    
     if (scrollView == self) {
         [self resetSubPriorTableViewContentOffset];
         self.isScrolling = NO;
+        if (self.currentIndex == 0) {
+            // 开启抽屉手势
+            [self startDrawerGesture];
+        }else{
+            // 禁止抽屉手势
+            [self stopDrawerGesture];
+        }
     }
 }
 
@@ -279,12 +357,22 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     // 判断tableView的class
     if ([tableView isMemberOfClass:[NewestTableView class]]) {
-        MessgeDetailController *detail = [[MessgeDetailController alloc] init];
-        detail.cellModel = [[tableView cellForRowAtIndexPath:indexPath] valueForKey:@"model"];
-        [detail.cellModel setValue:@(1) forKey:@"isRead"];
+        
+        SmallCellModel *model = [[tableView cellForRowAtIndexPath:indexPath] valueForKey:@"model"];
+        [self.viewModel saveModelTag:model];
         [tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
-        [self viewController].hidesBottomBarWhenPushed = YES;
-        [[self viewController].navigationController pushViewController:detail animated:YES];
+        
+        
+        if ([model.newstype isEqualToString:@"图集"]) {
+            ImageBrowserController *imageBroser = [[ImageBrowserController alloc] init];
+            imageBroser.cellModel = model;
+            [[self viewController].navigationController pushViewController:imageBroser animated:YES];
+            
+        }else{
+            MessgeDetailController *detail = [[MessgeDetailController alloc] init];
+            detail.cellModel = model;
+            [[self viewController].navigationController pushViewController:detail animated:YES];
+        }
     }
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -293,7 +381,17 @@
             return 80;
         }
     }
-    return 100;
+    
+    if ([tableView isMemberOfClass:[NewestTableView class]]) {
+        NewestTableView *newestTable = (NewestTableView *)tableView;
+        SmallCellModel *model = newestTable.models[indexPath.row];
+        if ([model.newstype isEqualToString:@"图集"]) {
+            return ATLAS_CELL_HEIGHT;
+        }
+        
+    }
+    
+    return ORDINARY_CELL_HEIGHT;
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
     if ([tableView isMemberOfClass:[SpecialTableView class]]) {
@@ -315,7 +413,7 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     if ([tableView isMemberOfClass:[SpecialTableView class]]) {
         UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 30)];
-        view.backgroundColor = [UIColor clearColor];
+        view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.05];
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, 100, 30)];
         label.font = [UIFont systemFontOfSize:14.0];
         label.textColor = [UIColor  grayColor];
@@ -332,7 +430,7 @@
             return view;
         }else{
             UIView *line = [[UIView alloc] init];
-            line.backgroundColor = [UIColor clearColor];
+            line.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.05];
             return line;
         }
         
@@ -348,7 +446,7 @@
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
     if ([tableView isMemberOfClass:[SpecialTableView class]]) {
         UIView *view = [[UIView alloc] init];
-        view.backgroundColor = [UIColor clearColor];
+        view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.05];
         return view;
     }
     return nil;

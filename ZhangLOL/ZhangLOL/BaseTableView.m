@@ -18,7 +18,7 @@
     self = [super initWithFrame:frame style:style];
     if (self) {
         self.separatorStyle = UITableViewCellSeparatorStyleNone;
-        self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.05];
+        self.backgroundColor = [UIColor whiteColor];
     }
     return self;
 }
@@ -28,6 +28,11 @@
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    
+    if ([otherGestureRecognizer.view isMemberOfClass:NSClassFromString(@"MessageScrollView")] || [otherGestureRecognizer isMemberOfClass:NSClassFromString(@"SWRevealViewControllerPanGestureRecognizer")]) {
+        return NO;
+    }
+    
     return YES;
 }
 

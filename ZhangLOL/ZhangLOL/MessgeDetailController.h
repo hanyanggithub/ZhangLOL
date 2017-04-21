@@ -7,8 +7,9 @@
 //
 
 #import "BaseViewController.h"
-#import "SmallCellModel.h"
-#import "RencommendModel.h"
+
+@class SmallCellModel;
+@class RencommendModel;
 @interface MessgeDetailController : BaseViewController
 
 @property(nonatomic, strong)SmallCellModel *cellModel;

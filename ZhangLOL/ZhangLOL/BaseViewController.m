@@ -14,20 +14,33 @@
 
 @implementation BaseViewController
 
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.hidesBottomBarWhenPushed = YES;
+    }
+    return self;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
     if (self.navigationController.navigationBar) {
+        [self.navigationController.navigationBar setBarStyle:UIBarStyleBlack];
         self.navigationController.navigationBar.hidden = YES;
         self.customNaviBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, 64)];
         [self.view addSubview:self.customNaviBar];
         self.customNaviItem = [[UINavigationItem alloc] init];
         self.customNaviBar.items = [NSArray arrayWithObject:self.customNaviItem];
-        [self.customNaviBar setTitleTextAttributes:@{NSForegroundColorAttributeName:MAIN_COLOR}];
+        [self.customNaviBar setTitleTextAttributes:@{NSForegroundColorAttributeName:MAIN_COLOR,NSFontAttributeName:[UIFont systemFontOfSize:NAVI_TITLE_FONT_SIZE]}];
         [self.customNaviBar setShadowImage:[UIImage new]];
     }
 }
 
+- (void)pop{
+    [self.view endEditing:YES];
+}
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.

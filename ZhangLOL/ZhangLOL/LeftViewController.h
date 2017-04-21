@@ -8,6 +8,15 @@
 
 #import <UIKit/UIKit.h>
 
+@class LeftViewController;
+
+@protocol LeftViewControllerDelegate <NSObject>
+
+- (void)leftViewControllerLoginBtnClicked;
+
+@end
+
 @interface LeftViewController : UIViewController
+@property(nonatomic, weak)id<LeftViewControllerDelegate> delegate;
 @property(nonatomic, strong)NSDictionary *userInfo;
 @end

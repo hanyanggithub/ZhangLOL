@@ -8,7 +8,15 @@
 
 
 #import "NewestTableView.h"
+#import "MessageScrollView.h"
 #import "SmallCell.h"
+#import "AtlasCell.h"
+#import "ClubCell.h"
+#import "SmallCellModel.h"
+
+static NSString *usualCellId = @"usualCellId";
+static NSString *atlasCellId = @"atlasCellId";
+static NSString *clubCellId = @"clubCellId";
 
 @interface NewestTableView ()<UITableViewDataSource>
 
@@ -20,12 +28,7 @@
 {
     self = [super initWithFrame:frame style:style];
     if (self) {
-//        self.estimatedRowHeight = 100;
-//        self.rowHeight = UITableViewAutomaticDimension;
         self.dataSource = self;
-//        HoverView * hoverView = [[HoverView alloc] initWithFrame:CGRectMake(0, 0, self.width, 60)];
-//        self.tableHeaderView = hoverView;
-
     }
     return self;
 }
@@ -39,21 +42,51 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    SmallCell *cell = (SmallCell *)[tableView dequeueReusableCellWithIdentifier:@"smallCellId"];
-    if (!cell) {
-        cell = [[SmallCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"smallCellId"];
+    NewestBaseCell *cell = nil;
+    NSString *reuseId = nil;
+    Class cellClass = nil;
+    SmallCellModel *model = self.models[indexPath.row];
+    if ([model.newstype isEqualToString:@"图集"]) {
+        reuseId = atlasCellId;
+        cellClass = [AtlasCell class];
     }
-    cell.model = self.models[indexPath.row];
+//    else if ([model.newstype isEqualToString:@"俱乐部"]) {
+//        reuseId = clubCellId;
+//        cellClass = [ClubCell class];
+//    }
+    else{
+        reuseId = usualCellId;
+        cellClass = [SmallCell class];
+    }
+    // 1.当前表视图寻找可复用单元格
+    cell = (NewestBaseCell *)[tableView dequeueReusableCellWithIdentifier:reuseId];
+    if (!cell) {
+        // 2.跨表视图复用
+        if ([self.superview isKindOfClass:[MessageScrollView class]]) {
+            MessageScrollView *superView = (MessageScrollView *)self.superview;
+            NSArray *resuabel = superView.reusableTables;
+            for (UITableView *reusableTableView in resuabel) {
+                cell = [reusableTableView dequeueReusableCellWithIdentifier:reuseId];
+                if (cell) {
+                    break;
+                }
+            }
+        }
+        
+    }
+    
+    if (!cell) {
+        cell = [[cellClass alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseId];
+    }
+    cell.model = model;
     return cell;
 }
 - (void)updateWithDataModels:(NSArray *)models dataInfo:(NSDictionary *)dataInfo {
     // 判断数据的变化(单个刷新单元格还是全刷)
-    if (models) {
-        if (self.models != models) {
-            self.models = models;
-            [self reloadData];
-        }
+    if (self.models == nil) {
+        self.models = models;
     }
+    [self reloadData];
     
 }
 

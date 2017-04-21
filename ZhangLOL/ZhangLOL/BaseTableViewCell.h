@@ -11,7 +11,7 @@
 
 @interface BaseTableViewCell : UITableViewCell
 
-- (NSString *)dealTimeWithDateString:(NSString *)time;
 @property(nonatomic, strong)BaseModel *model;
+- (NSString *)dealTimeWithDateString:(NSString *)time;  // 处理日期时间
 
 @end

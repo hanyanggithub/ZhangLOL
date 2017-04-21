@@ -12,5 +12,5 @@
 
 @property(nonatomic, strong)UINavigationBar *customNaviBar;
 @property(nonatomic, strong)UINavigationItem *customNaviItem;
-
+- (void)pop;
 @end
