@@ -10,11 +10,10 @@
 #import "SmallCellModel.h"
 #import "RencommendModel.h"
 #import <WebKit/WebKit.h>
-#import <ZFPlayer.h>
 
-@interface MessgeDetailController ()<UIGestureRecognizerDelegate,ZFPlayerDelegate,WKNavigationDelegate,WKScriptMessageHandler>
+@interface MessgeDetailController ()<WKNavigationDelegate,WKScriptMessageHandler>
 @property(nonatomic, strong)WKWebView *webView;
-@property(nonatomic, strong)ZFPlayerView *playerView;
+@property(nonatomic, strong)UIProgressView *progressView;
 @property(nonatomic, copy)NSString *movieUrl;
 @end
 
@@ -22,20 +21,20 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.enableFullScreenPop = YES;
+    self.haveBackButton = YES;
     [self createSubviews];
     [self settingNavigationBar];
 }
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    NSLog(@"%@",message.body);
+    MYLog(@"%@",message.body);
     if ([message.name isEqualToString:@"jsFunction"]) {
         return ;
     }
-    
     if ([message.name isEqualToString:@"playMovie"]) {
         // 播放
 //        NSString *playCode= @"LOL_QT_Video.openUrl('http://qt.qq.com/?reqApp=&type=VIDEO_PLAY&vData=\"videoObj.msg.vid\"&vType=VOD&dType=VOD&ivideoid=\"LOL_QT_Video.VideoId\"&time=\"videoObj.msg.time');";
-//        
-//  
+        
 //        NSString *jsCode = @" $('#todoPlay').attr('href',\"javascript:LOL_QT_Video.LOL_Play_Video(\"+LOL_QT_Video.VideoId+\",'\"+videoObj.msg.vid+\"','//qt.qq.com/?reqApp=|type=VIDEO_PLAY|vData=\"+videoObj.msg.vid+\"|vType=VOD|dType=VOD|ivideoid=\"+self.VideoId+\"|time=\"+videoObj.msg.time+\"')\"); var iframe = document.getElementById('todoPlay');window.webkit.messageHandlers.jsFunction.postMessage(iframe.href);";
 ////        NSString *jsCode = @"window.webkit.messageHandlers.playMovie.postMessage(window.location.href);";
 //        [self.webView evaluateJavaScript:playCode completionHandler:^(id _Nullable res, NSError * _Nullable error) {
@@ -44,53 +43,30 @@
 //            }
 //        }];
         
-        
-//        ZFPlayerModel *playerModel = [[ZFPlayerModel alloc]init];
-//        playerModel.fatherView = self.view;
-//        playerModel.videoURL = [NSURL URLWithString:self.movieUrl];
-//        playerModel.videoURL = [NSURL URLWithString:@"http://124.14.18.208/vhot2.qqvideo.tc.qq.com/x0394ou5zj0.p712.1.mp4?vkey=0539E668D6E43F28747A9FB7AD442E9FCC5A38201E42ECB06E457DEFFE30836A46DD1F50A324403DAE06FB8CE77CB07BCAB4A1CE2F7D63AC4EC8B23DBF3442819BB5A2B4FA4721F10946AFB0A3F8D5C747C35830554ABEFE&sha=&level=3&br=200&fmt=hd&sdtfrom=v3030&platform=280403&guid=79bcf3c73adb1035968380fbd48ad00a&locid=4682abb3-5d41-4674-8526-d5cbcf525ab6&size=12446414&ocid=2370966956"];
-//        playerModel.videoURL = [NSURL URLWithString:@"http://baobab.wdjcdn.com/14571455324031.mp4"];
-//        playerModel.title = @"无标题";
-//        [self.playerView playerControlView:nil playerModel:playerModel];
-//        [self.playerView autoPlayTheVideo];
-//        NSLog(@"点击iframe区域,but获取不到视频的源地址");
-        
     }
 }
 
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(null_unspecified WKNavigation *)navigation {
+    self.progressView.hidden = NO;
+}
+- (void)webView:(WKWebView *)webView didFinishNavigation:(null_unspecified WKNavigation *)navigation {
+//    NSString *sizeJs = @"";
+//    [webView evaluateJavaScript:sizeJs completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+//        
+//    }];
+    self.progressView.hidden = YES;
+}
+- (void)webView:(WKWebView *)webView didFailNavigation:(null_unspecified WKNavigation *)navigation withError:(NSError *)error {
+    self.progressView.hidden = YES;
+}
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
-    
     if ([navigationAction.request.URL.absoluteString hasPrefix:@"http://v.qq.com/iframe/txp/player.html?"]) {
         // 截获视频地址
         self.movieUrl = navigationAction.request.URL.absoluteString;
     }
     decisionHandler(WKNavigationActionPolicyAllow);
 }
-- (ZFPlayerView *)playerView {
-    if (_playerView == nil) {
-        _playerView = [[ZFPlayerView alloc] init];
-        [self.view addSubview:_playerView];
-        
-        [_playerView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.equalTo(self.view).offset(20);
-            make.left.right.equalTo(self.view);
-            // Here a 16:9 aspect ratio, can customize the video aspect ratio
-            make.height.equalTo(_playerView.mas_width).multipliedBy(9.0f/16.0f);
-        }];
-        // delegate
-        _playerView.delegate = self;
-    }
-    return _playerView;
-}
-/** 返回按钮事件 */
-- (void)zf_playerBackAction {
-    NSLog(@"返回");
-    [self.playerView resetPlayer];
-}
-/** 下载视频 */
-- (void)zf_playerDownload:(NSString *)url {
-    NSLog(@"下载");
-}
+
 - (void)createSubviews {
     
     WKWebViewConfiguration *configuretion = [[WKWebViewConfiguration alloc] init];
@@ -110,8 +86,16 @@
     
     self.webView = [[WKWebView alloc] initWithFrame:CGRectMake(0, 44, self.view.width, self.view.height - 44) configuration:configuretion];
     self.webView.navigationDelegate = self;
-    self.webView.scrollView.bounces = NO;
+    [self.webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
     [self.view addSubview:self.webView];
+    
+    self.progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, 64, self.view.width, 0)];
+    self.progressView.progressTintColor = [UIColor greenColor];
+    self.progressView.trackTintColor = [UIColor whiteColor];
+    self.progressView.hidden = YES;
+    [self.view addSubview:self.progressView];
+    
+    
     NSString *urlStr = nil;
     if (self.cellModel) {
         urlStr = self.cellModel.article_url;
@@ -125,29 +109,10 @@
 }
 
 - (void)settingNavigationBar {
-    
     [self.view insertSubview:self.customNaviBar aboveSubview:self.webView];
     self.customNaviItem.title = @"资讯详情";
     [self.customNaviBar setBackgroundImage:[UIImage imageNamed:@"nav_bar_bg_for_seven"] forBarMetrics:UIBarMetricsDefault];
     
-    
-    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    backButton.frame = CGRectMake(0, 0, 22, 40);
-    [backButton setImage:[UIImage imageNamed:@"nav_btn_back_tiny_normal"] forState:UIControlStateNormal];
-    [backButton setImage:[UIImage imageNamed:@"nav_btn_back_tiny__pressed"] forState:UIControlStateHighlighted];
-    [backButton addTarget:self action:@selector(pop) forControlEvents:UIControlEventTouchUpInside];
-    UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:backButton];
-    self.customNaviItem.leftBarButtonItem = leftItem;
-    
-    // 全屏滑动返回
-    __weak id systemTarget = self.navigationController.interactivePopGestureRecognizer.delegate;
-    UIPanGestureRecognizer *popPan = [[UIPanGestureRecognizer alloc] initWithTarget:systemTarget action:NSSelectorFromString(@"handleNavigationTransition:")];
-    [self.view addGestureRecognizer:popPan];
-    self.navigationController.interactivePopGestureRecognizer.enabled = NO;
-    
-}
-- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
-    return YES;
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -159,13 +124,14 @@
     [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"playMovie"];
     [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"jsFunction"];
 }
-
-- (void)pop {
-    [self.navigationController popViewControllerAnimated:YES];
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if ([keyPath isEqualToString:@"estimatedProgress"]) {
+        NSNumber *pro = change[NSKeyValueChangeNewKey];
+        [self.progressView setProgress:pro.floatValue animated:YES];
+    }
 }
-
-
-
-
+- (void)dealloc {
+    [self.webView removeObserver:self forKeyPath:@"estimatedProgress"];
+}
 
 @end

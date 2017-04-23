@@ -12,7 +12,7 @@
 #import "DiscoverViewController.h"
 #import "MeViewController.h"
 
-@interface TabBarController ()
+@interface TabBarController ()<SWRevealViewControllerDelegate>
 
 @end
 
@@ -32,12 +32,12 @@
     friendNavi.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"好友" image:[[UIImage imageNamed:@"tab_icon_friend_normal"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] selectedImage:[[UIImage imageNamed:@"tab_icon_friend_press"]imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     
     DiscoverViewController *discover = [[DiscoverViewController alloc] init];
-    friend.hidesBottomBarWhenPushed = NO;
+    discover.hidesBottomBarWhenPushed = NO;
     UINavigationController *discoverNavi = [[UINavigationController alloc] initWithRootViewController:discover];
     discoverNavi.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"发现" image:[[UIImage imageNamed:@"tab_icon_quiz_normal"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] selectedImage:[[UIImage imageNamed:@"tab_icon_quiz_press"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     
     MeViewController *me = [[MeViewController alloc] init];
-    friend.hidesBottomBarWhenPushed = NO;
+    me.hidesBottomBarWhenPushed = NO;
     UINavigationController *meNavi = [[UINavigationController alloc] initWithRootViewController:me];
     meNavi.tabBarItem = [[UITabBarItem alloc] initWithTitle:@"我" image:[[UIImage imageNamed:@"tab_icon_more_normal"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] selectedImage:[[UIImage imageNamed:@"tab_icon_more_press"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     self.viewControllers = @[messgeNavi,friendNavi,discoverNavi,meNavi];
@@ -47,11 +47,15 @@
     self.tabBar.translucent = NO;
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+#pragma mark - SWRevealViewControllerDelegate
+- (void)revealController:(SWRevealViewController *)revealController willMoveToPosition:(FrontViewPosition)position {
+    if (position == FrontViewPositionLeft) {
+        // 开启滑动交互
+        self.view.userInteractionEnabled = YES;
+    }else if (position == FrontViewPositionRight) {
+        self.view.userInteractionEnabled = NO;
+    }
 }
-
 
 
 @end

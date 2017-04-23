@@ -1,0 +1,36 @@
+
+/* Class = "UILabel"; text = "隐私设置"; ObjectID = "0Me-ws-6Jb"; */
+"0Me-ws-6Jb.text" = "隐私设置";
+
+/* Class = "UILabel"; text = "绑定大区"; ObjectID = "6S2-1a-Pcp"; */
+"6S2-1a-Pcp.text" = "绑定大区";
+
+/* Class = "UILabel"; text = "关于掌盟"; ObjectID = "A5s-go-tNT"; */
+"A5s-go-tNT.text" = "关于掌盟";
+
+/* Class = "UILabel"; text = "大区"; ObjectID = "Beq-jM-PAR"; */
+"Beq-jM-PAR.text" = "大区";
+
+/* Class = "UILabel"; text = "资讯图片自动下载设置"; ObjectID = "Dhk-XA-cQN"; */
+"Dhk-XA-cQN.text" = "资讯图片自动下载设置";
+
+/* Class = "UILabel"; text = "退出登录"; ObjectID = "G9N-pf-X5i"; */
+"G9N-pf-X5i.text" = "退出登录";
+
+/* Class = "UILabel"; text = "意见反馈"; ObjectID = "KOz-iN-6ho"; */
+"KOz-iN-6ho.text" = "意见反馈";
+
+/* Class = "UILabel"; text = "省流量"; ObjectID = "OEf-aJ-7Da"; */
+"OEf-aJ-7Da.text" = "省流量";
+
+/* Class = "UILabel"; text = "20M"; ObjectID = "Rdp-r3-7kY"; */
+"Rdp-r3-7kY.text" = "20M";
+
+/* Class = "UILabel"; text = "清空缓存"; ObjectID = "f1M-NK-8ak"; */
+"f1M-NK-8ak.text" = "清空缓存";
+
+/* Class = "UILabel"; text = "官方反馈QQ群:332461184"; ObjectID = "f2p-62-nvY"; */
+"f2p-62-nvY.text" = "官方反馈QQ群:332461184";
+
+/* Class = "UILabel"; text = "消息推送设置"; ObjectID = "wmG-VC-0g6"; */
+"wmG-VC-0g6.text" = "消息推送设置";

@@ -46,6 +46,10 @@
 		04414A161E95453B0079D027 /* BaseTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 04414A151E95453B0079D027 /* BaseTableView.m */; };
 		04BCE6081E9A0B3F00182753 /* MessageViewModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 04BCE6071E9A0B3F00182753 /* MessageViewModel.m */; };
 		04BCE60B1E9A3F9A00182753 /* ImageBlur.m in Sources */ = {isa = PBXBuildFile; fileRef = 04BCE60A1E9A3F9A00182753 /* ImageBlur.m */; };
+		04EC0BB71EAA9B0000803E0F /* SettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EC0BB61EAA9B0000803E0F /* SettingViewController.m */; };
+		04EC0BBE1EAABDAE00803E0F /* SettingTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EC0BBD1EAABDAE00803E0F /* SettingTableViewCell.m */; };
+		04EC0BC11EAAF04100803E0F /* DBManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EC0BC01EAAF04100803E0F /* DBManager.m */; };
+		04EC0BC41EAB25B100803E0F /* Encrypt.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EC0BC31EAB25B100803E0F /* Encrypt.m */; };
 		04EDE0381E95FF5400A07768 /* SmallCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EDE0371E95FF5400A07768 /* SmallCell.m */; };
 		04EDE03B1E96015000A07768 /* SmallCellModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EDE03A1E96015000A07768 /* SmallCellModel.m */; };
 		04EDE0461E96692800A07768 /* MessgeDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EDE0451E96692800A07768 /* MessgeDetailController.m */; };
@@ -151,6 +155,14 @@
 		04BCE6071E9A0B3F00182753 /* MessageViewModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MessageViewModel.m; sourceTree = "<group>"; };
 		04BCE6091E9A3F9A00182753 /* ImageBlur.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageBlur.h; sourceTree = "<group>"; };
 		04BCE60A1E9A3F9A00182753 /* ImageBlur.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageBlur.m; sourceTree = "<group>"; };
+		04EC0BB51EAA9B0000803E0F /* SettingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingViewController.h; sourceTree = "<group>"; };
+		04EC0BB61EAA9B0000803E0F /* SettingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingViewController.m; sourceTree = "<group>"; };
+		04EC0BBC1EAABDAE00803E0F /* SettingTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingTableViewCell.h; sourceTree = "<group>"; };
+		04EC0BBD1EAABDAE00803E0F /* SettingTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingTableViewCell.m; sourceTree = "<group>"; };
+		04EC0BBF1EAAF04100803E0F /* DBManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBManager.h; sourceTree = "<group>"; };
+		04EC0BC01EAAF04100803E0F /* DBManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBManager.m; sourceTree = "<group>"; };
+		04EC0BC21EAB25B100803E0F /* Encrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Encrypt.h; sourceTree = "<group>"; };
+		04EC0BC31EAB25B100803E0F /* Encrypt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Encrypt.m; sourceTree = "<group>"; };
 		04EDE0361E95FF5400A07768 /* SmallCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmallCell.h; sourceTree = "<group>"; };
 		04EDE0371E95FF5400A07768 /* SmallCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SmallCell.m; sourceTree = "<group>"; };
 		04EDE0391E96015000A07768 /* SmallCellModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmallCellModel.h; sourceTree = "<group>"; };
@@ -223,15 +235,15 @@
 			children = (
 				040CF9AA1E92405700B003D5 /* AppDelegate.h */,
 				040CF9AB1E92405700B003D5 /* AppDelegate.m */,
-				04BCE6041E9A0AC700182753 /* config */,
-				0405D6851E995296002D1622 /* other modules */,
 				040CF9BE1E92436900B003D5 /* message */,
 				040CF9BF1E9243A300B003D5 /* friend */,
 				040CF9C01E9243A500B003D5 /* discover */,
 				040CF9C11E9243A700B003D5 /* me */,
-				04EDE03D1E96040400A07768 /* tool */,
+				0405D6851E995296002D1622 /* other modules */,
 				04EDE03C1E9603D000A07768 /* base */,
+				04EDE03D1E96040400A07768 /* tool */,
 				04FCD3C21EA18EC90087722C /* third */,
+				04BCE6041E9A0AC700182753 /* config */,
 				041AF2491EA393EC00C1BAB7 /* resource file */,
 			);
 			name = Project;
@@ -240,14 +252,8 @@
 		0405D6851E995296002D1622 /* other modules */ = {
 			isa = PBXGroup;
 			children = (
-				040CF9C51E92443D00B003D5 /* TabBarController.h */,
-				040CF9C61E92443D00B003D5 /* TabBarController.m */,
-				0405D6821E99528A002D1622 /* LeftViewController.h */,
-				0405D6831E99528A002D1622 /* LeftViewController.m */,
-				04F80A271EA2C30E00613897 /* LaunchViewController.h */,
-				04F80A281EA2C30E00613897 /* LaunchViewController.m */,
-				040CF9D41E924F8400B003D5 /* LoginViewController.h */,
-				040CF9D51E924F8400B003D5 /* LoginViewController.m */,
+				04EC0BBB1EAABD9300803E0F /* view */,
+				04EC0BBA1EAABD8700803E0F /* controller */,
 			);
 			name = "other modules";
 			sourceTree = "<group>";
@@ -431,6 +437,32 @@
 			name = "view model";
 			sourceTree = "<group>";
 		};
+		04EC0BBA1EAABD8700803E0F /* controller */ = {
+			isa = PBXGroup;
+			children = (
+				040CF9C51E92443D00B003D5 /* TabBarController.h */,
+				040CF9C61E92443D00B003D5 /* TabBarController.m */,
+				0405D6821E99528A002D1622 /* LeftViewController.h */,
+				0405D6831E99528A002D1622 /* LeftViewController.m */,
+				04F80A271EA2C30E00613897 /* LaunchViewController.h */,
+				04F80A281EA2C30E00613897 /* LaunchViewController.m */,
+				040CF9D41E924F8400B003D5 /* LoginViewController.h */,
+				040CF9D51E924F8400B003D5 /* LoginViewController.m */,
+				04EC0BB51EAA9B0000803E0F /* SettingViewController.h */,
+				04EC0BB61EAA9B0000803E0F /* SettingViewController.m */,
+			);
+			name = controller;
+			sourceTree = "<group>";
+		};
+		04EC0BBB1EAABD9300803E0F /* view */ = {
+			isa = PBXGroup;
+			children = (
+				04EC0BBC1EAABDAE00803E0F /* SettingTableViewCell.h */,
+				04EC0BBD1EAABDAE00803E0F /* SettingTableViewCell.m */,
+			);
+			name = view;
+			sourceTree = "<group>";
+		};
 		04EDE03C1E9603D000A07768 /* base */ = {
 			isa = PBXGroup;
 			children = (
@@ -449,6 +481,8 @@
 		04EDE03D1E96040400A07768 /* tool */ = {
 			isa = PBXGroup;
 			children = (
+				04EC0BC21EAB25B100803E0F /* Encrypt.h */,
+				04EC0BC31EAB25B100803E0F /* Encrypt.m */,
 				041AF24A1EA3A15E00C1BAB7 /* UIImage+animatedGIF.h */,
 				041AF24B1EA3A15E00C1BAB7 /* UIImage+animatedGIF.m */,
 				041AF24D1EA424E400C1BAB7 /* UIColor+Extension.h */,
@@ -463,6 +497,8 @@
 				040CF9D91E925B1C00B003D5 /* ZhangLOLNetwork.m */,
 				04EDE04A1E96944C00A07768 /* UIScrollView+Extension.h */,
 				04EDE04B1E96944C00A07768 /* UIScrollView+Extension.m */,
+				04EC0BBF1EAAF04100803E0F /* DBManager.h */,
+				04EC0BC01EAAF04100803E0F /* DBManager.m */,
 			);
 			name = tool;
 			sourceTree = "<group>";
@@ -670,6 +706,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04EC0BC41EAB25B100803E0F /* Encrypt.m in Sources */,
 				040CF9FC1E92E54000B003D5 /* BaseModel.m in Sources */,
 				04F0CA081EA58D1800843B64 /* ImageBrowserController.m in Sources */,
 				04093A0F1EA93C6900879635 /* RefreshFooterView.m in Sources */,
@@ -693,6 +730,7 @@
 				040CF9D01E92448C00B003D5 /* DiscoverViewController.m in Sources */,
 				040CF9C71E92443D00B003D5 /* TabBarController.m in Sources */,
 				040CF9E31E926C1200B003D5 /* ChannelView.m in Sources */,
+				04EC0BBE1EAABDAE00803E0F /* SettingTableViewCell.m in Sources */,
 				040BC4AA1EA7F8FA00CE7BA0 /* SearchViewController.m in Sources */,
 				0405D6841E99528A002D1622 /* LeftViewController.m in Sources */,
 				040CF9F61E92DF2400B003D5 /* RecommendPageControll.m in Sources */,
@@ -709,6 +747,7 @@
 				040CF9CD1E92447900B003D5 /* FriendViewController.m in Sources */,
 				04F0CA051EA58C1E00843B64 /* SGZoomingImageView.m in Sources */,
 				0405D66A1E98C667002D1622 /* SpecialGenericCell.m in Sources */,
+				04EC0BB71EAA9B0000803E0F /* SettingViewController.m in Sources */,
 				04F0CA031EA58C1E00843B64 /* SGPhotoViewController.m in Sources */,
 				040CF9DA1E925B1C00B003D5 /* ZhangLOLNetwork.m in Sources */,
 				04F0CA021EA58C1E00843B64 /* SGPhotoView.m in Sources */,
@@ -719,6 +758,7 @@
 				0405D67C1E98EA0E002D1622 /* NewestTableHeaderView.m in Sources */,
 				040CF9A91E92405700B003D5 /* main.m in Sources */,
 				040CF9E91E9286C300B003D5 /* HoverView.m in Sources */,
+				04EC0BC11EAAF04100803E0F /* DBManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

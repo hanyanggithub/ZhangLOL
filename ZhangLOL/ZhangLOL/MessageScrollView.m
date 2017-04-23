@@ -83,9 +83,12 @@
         return nil;
     }
 }
+- (void)setAllChannelCount:(NSInteger)allChannelCount {
+    _allChannelCount = allChannelCount;
+    self.contentSize = CGSizeMake(self.width * allChannelCount, self.height);
+}
 
 - (void)createFirstTwoTableViews {
-    self.contentSize = CGSizeMake(self.width * 2, self.height);
     for (int i = 0; i < self.classArray.count; i++) {
         Class class = self.classArray[i];
         BaseTableView *tableView = nil;
@@ -256,7 +259,6 @@
     // 判断是否需要创建
     if (index >= self.tableViews.count) {
         // 创建
-        self.contentSize = CGSizeMake(self.width * (index + 1), self.height);
         NSInteger orinCount = self.tableViews.count;
         NSInteger createCount = index - self.tableViews.count + 1;
         for (int i = 0;  i < createCount; i++) {

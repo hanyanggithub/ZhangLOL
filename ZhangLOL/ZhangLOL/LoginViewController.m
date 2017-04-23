@@ -27,6 +27,7 @@
     [super viewDidLoad];
     [self createSubviews];
 }
+
 - (void)createSubviews {
     
     self.bgImageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
@@ -190,6 +191,7 @@
                        kOPEN_PERMISSION_CHECK_PAGE_FANS];
     [self.oAuth authorize:array];
 }
+
 #pragma mark - TencentLoginDelegate
 - (void)tencentDidLogin {
     // 登录完成
@@ -199,6 +201,7 @@
     self.oAuth.sessionDelegate = self.navigationController.viewControllers[0];
     // 获取用户信息
     [self.oAuth getUserInfo];
+    [SVProgressHUD show];
 }
 - (void)tencentDidNotLogin:(BOOL)cancelled {
     // 用户取消登录

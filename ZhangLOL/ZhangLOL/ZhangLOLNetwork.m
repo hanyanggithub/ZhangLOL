@@ -12,7 +12,11 @@
 @interface ZhangLOLNetwork ()
 
 @property(nonatomic, strong)AFHTTPSessionManager *httpManager;
-@property(nonatomic, strong)AFHTTPSessionManager *urlManager;
+@property(nonatomic, strong)AFHTTPSessionManager *httpForResponseSerializerHtmlManager;
+@property(nonatomic, strong)AFNetworkReachabilityManager *reachability;
+@property(nonatomic, assign)ZhangLOLReachabilityStatus reachabilityStatus;
+@property(nonatomic, assign)ZhangLOLReachabilityStatus priorReachabilityStatus;
+@property(nonatomic, copy)void(^netChangeBlock)(ZhangLOLReachabilityStatus changeBlock);
 @end
 
 static ZhangLOLNetwork *singleton;
@@ -26,32 +30,29 @@ static ZhangLOLNetwork *singleton;
         singleton = [[self alloc] init];
         singleton.httpManager = [AFHTTPSessionManager manager];
         singleton.httpManager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"text/html",@"application/json", nil];
-
         
-        AFHTTPResponseSerializer *responseSerialier = [AFHTTPResponseSerializer serializer];
-        responseSerialier.acceptableContentTypes = [NSSet setWithObjects:@"text/html",@"application/json", nil];
-        singleton.urlManager = [AFHTTPSessionManager manager];
-        singleton.urlManager.responseSerializer = responseSerialier;
+        AFHTTPResponseSerializer *dataResponseSerializer = [AFHTTPResponseSerializer serializer];
+        dataResponseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"text/html", nil];
+        singleton.httpForResponseSerializerHtmlManager = [AFHTTPSessionManager manager];
+        singleton.httpForResponseSerializerHtmlManager.responseSerializer = dataResponseSerializer;
     });
     return singleton;
 }
 
-+ (NSURLSessionDataTask *)HTML:(NSString *)URLString
-                            parameters:(id)parameters
-                              progress:(void (^)(NSProgress *downloadProgress))downloadProgress
-                               success:(void (^)(NSURLSessionDataTask *task, id  responseObject))success
-                               failure:(void (^)(NSURLSessionDataTask *task, NSError *error))failure {
-    
++ (NSURLSessionDataTask *)GET:(NSString *)URLString
+                     progress:(void (^)(NSProgress *downloadProgress))downloadProgress
+                      success:(void (^)(NSURLSessionDataTask *task, id responseObject))success
+                      failure:(void (^)(NSURLSessionDataTask * task, NSError *error))failure {
     ZhangLOLNetwork *obj = [self singleton];
-    NSURLSessionDataTask *task = [obj.urlManager GET:URLString parameters:parameters progress:downloadProgress success:success failure:failure];
+    NSURLSessionDataTask *task = [obj.httpForResponseSerializerHtmlManager GET:URLString parameters:nil progress:downloadProgress success:success failure:failure];
     return task;
 }
 
-+ (nullable NSURLSessionDataTask *)GET:(NSString *)URLString
-                            parameters:(nullable id)parameters
-                              progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgress
-                               success:(nullable void (^)(NSURLSessionDataTask *task, id _Nullable responseObject))success
-                               failure:(nullable void (^)(NSURLSessionDataTask * _Nullable task, NSError *error))failure {
++ (NSURLSessionDataTask *)GET:(NSString *)URLString
+                   parameters:(id)parameters
+                     progress:(void (^)(NSProgress *downloadProgress))downloadProgress
+                      success:(void (^)(NSURLSessionDataTask *task, id responseObject))success
+                      failure:(void (^)(NSURLSessionDataTask * task, NSError *error))failure {
     ZhangLOLNetwork *obj = [self singleton];
     NSURLSessionDataTask *task = [obj.httpManager GET:URLString parameters:parameters progress:downloadProgress success:success failure:failure];
     return task;
@@ -65,6 +66,57 @@ static ZhangLOLNetwork *singleton;
     NSURLSessionDownloadTask *task = [obj.httpManager downloadTaskWithRequest:request progress:downloadProgressBlock destination:destination completionHandler:completionHandler];
     [task resume];
     return task;
+}
+- (AFNetworkReachabilityManager *)reachability {
+    if (_reachability == nil) {
+        _reachability = [AFNetworkReachabilityManager sharedManager];
+    }
+    return _reachability;
+}
++ (void)startMonitoring {
+    ZhangLOLNetwork *obj = [self singleton];
+    __weak typeof(obj) weakPointer = obj;
+    [obj.reachability setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        weakPointer.priorReachabilityStatus =  weakPointer.reachabilityStatus;
+        switch (status) {
+            case AFNetworkReachabilityStatusUnknown:
+                weakPointer.reachabilityStatus = ZhangLOLReachabilityStatusUnknown;
+                break;
+            case AFNetworkReachabilityStatusNotReachable:
+                weakPointer.reachabilityStatus = ZhangLOLReachabilityStatusNotReachable;
+                break;
+            case AFNetworkReachabilityStatusReachableViaWWAN:
+                weakPointer.reachabilityStatus = ZhangLOLReachabilityStatusReachableViaWWAN;
+                break;
+            case AFNetworkReachabilityStatusReachableViaWiFi:
+                weakPointer.reachabilityStatus = ZhangLOLReachabilityStatusReachableViaWiFi;
+                break;
+            default:
+                break;
+        }
+        if (weakPointer.netChangeBlock) {
+            weakPointer.netChangeBlock(weakPointer.reachabilityStatus);
+        }
+    }];
+    [obj.reachability startMonitoring];
+}
++ (BOOL)netUsable {
+    ZhangLOLNetwork *obj = [self singleton];
+    if (obj.reachabilityStatus == ZhangLOLReachabilityStatusReachableViaWWAN || obj.reachabilityStatus == ZhangLOLReachabilityStatusReachableViaWiFi) {
+        return YES;
+    }else{
+        return NO;
+    }
+}
++ (ZhangLOLReachabilityStatus)currentNetStatus {
+    return [self singleton].reachabilityStatus;
+}
++ (ZhangLOLReachabilityStatus)priorNetStatus {
+    return [self singleton].priorReachabilityStatus;
+}
++ (void)setReachabilityStatusChangeBlock:(nullable void (^)(ZhangLOLReachabilityStatus status))block {
+    ZhangLOLNetwork *obj = [self singleton];
+    obj.netChangeBlock = block;
 }
 
 @end

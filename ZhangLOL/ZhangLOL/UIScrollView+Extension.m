@@ -7,28 +7,8 @@
 //
 
 #import "UIScrollView+Extension.h"
-#import "RefreshHeaderView.h"
 
 @implementation UIScrollView (Extension)
 
-//
-//- (void)removeFromSuperview {
-//    
-//    RefreshHeaderView *view = [self getRefreshHeaderView];
-//    if (view) {
-//        
-//    }
-//    [super removeFromSuperview];
-//}
-//
-//- (RefreshHeaderView *)getRefreshHeaderView {
-//
-//    for (UIView *view in self.superview.subviews) {
-//        if ([view isKindOfClass:[RefreshHeaderView class]]) {
-//            return (RefreshHeaderView *)view;
-//        }
-//    }
-//    return nil;
-//}
 
 @end

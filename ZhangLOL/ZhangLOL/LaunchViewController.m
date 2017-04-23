@@ -86,6 +86,7 @@
 //    NSLog(@"%@",response.message);
     //    NSLog(@"%@",response.jsonResponse);
     // 处理信息返回
+    [SVProgressHUD dismissWithDelay:0.5];
     if ([self.delegate respondsToSelector:@selector(launchViewControllerJudgeLoginStateSucceed:userInfo:)]) {
         [self.delegate launchViewControllerJudgeLoginStateSucceed:self userInfo:response.jsonResponse];
     }

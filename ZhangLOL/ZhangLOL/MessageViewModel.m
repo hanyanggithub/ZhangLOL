@@ -11,13 +11,214 @@
 #import "ChannelModel.h"
 #import "SmallCellModel.h"
 #import "SpecialModel.h"
+#import <objc/runtime.h>
 
 @interface MessageViewModel ()
-
+@property(nonatomic, strong)NSMutableDictionary *fromDataBaseInfo;
 @end
 
+NSString * const channelTableName = @"channelTableName";
+NSString * const rencommendTableName = @"rencommendTableName";
 
 @implementation MessageViewModel
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(saveData) name:UIApplicationDidEnterBackgroundNotification object:nil];
+    }
+    return self;
+}
+- (NSMutableDictionary *)fromDataBaseInfo {
+    if (_fromDataBaseInfo == nil) {
+        _fromDataBaseInfo = [NSMutableDictionary dictionary];
+    }
+    return _fromDataBaseInfo;
+}
+- (NSMutableDictionary *)getAllPropertyName:(Class)class {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    unsigned int propertyCount;
+    objc_property_t *pArray = class_copyPropertyList(class, &propertyCount);
+    for (int i = 0; i < propertyCount; i++) {
+        objc_property_t property = pArray[i];
+        const char *property_name = property_getName(property);
+        NSString *propertyName = [[NSString alloc] initWithUTF8String:property_name];
+        [dic setObject:@"name" forKey:propertyName];
+    }
+    return dic;
+}
+- (void)readDataFromDB {
+    if ([DBManager isExistsTableWithName:channelTableName]) {
+        [DBManager selectDataInTableWithName:channelTableName completeBlock:^(BOOL result, NSArray *resultData) {
+            if (result && resultData.count > 0) {
+                NSMutableArray *array = [NSMutableArray array];
+                for (NSDictionary *dic in resultData) {
+                    ChannelModel *model = [[ChannelModel alloc] initWithDic:dic];
+                    [array addObject:model];
+                }
+                self.channelModels = array;
+            }
+        }];
+    }
+    
+    if ([DBManager isExistsTableWithName:rencommendTableName]) {
+        [DBManager selectDataInTableWithName:rencommendTableName completeBlock:^(BOOL result, NSArray *resultData) {
+            if (result && resultData.count > 0) {
+                NSMutableArray *array = [NSMutableArray array];
+                for (NSDictionary *dic in resultData) {
+                    RencommendModel *model = [[RencommendModel alloc] initWithDic:dic];
+                    [array addObject:model];
+                }
+                self.rencommendModels = array;
+            }
+        }];
+    }
+    
+    for (ChannelModel *channelModel in self.channelModels) {
+        NSString *tableName = [NSString stringWithFormat:@"channelId%@_%@",channelModel.channel_id,[[Encrypt getMessageDigestMD5:channelModel.channel_id] substringToIndex:10]];
+        if ([DBManager isExistsTableWithName:tableName]) {
+            NSMutableArray *array = [NSMutableArray array];
+            [DBManager selectDataInTableWithName:tableName completeBlock:^(BOOL result, NSArray *resultData) {
+                if (result && resultData > 0) {
+                    if ([channelModel.chnl_type isEqualToString:@"col"]) {
+                        NSMutableArray *subArray1 = [NSMutableArray array];
+                        NSMutableArray *subArray2 = [NSMutableArray array];
+                        NSMutableArray *subArray3 = [NSMutableArray array];
+                        for (NSDictionary *dic in resultData) {
+                            SpecialModel *specialModel = [[SpecialModel alloc] initWithDic:dic];
+                            if ([specialModel.type isEqualToString:@"0"]) {
+                                [subArray1 addObject:specialModel];
+                            }else if ([specialModel.type isEqualToString:@"1"]) {
+                                [subArray2 addObject:specialModel];
+                            }else if ([specialModel.type isEqualToString:@"2"]) {
+                                [subArray3 addObject:specialModel];
+                            }
+                        }
+                        [array addObject:subArray1];
+                        [array addObject:subArray2];
+                        [array addObject:subArray3];
+                    }else{
+                        for (NSDictionary *dic in resultData) {
+                            SmallCellModel *smallCellModel = [[SmallCellModel alloc] initWithDic:dic];
+                            [array addObject:smallCellModel];
+                        }
+                    }
+                    [self.fromDataBaseInfo setObject:@"1" forKey:channelModel.channel_id];
+                    [self.allChannelsModelDic setObject:array forKey:channelModel.channel_id];
+                }
+            }];
+        }
+    }
+}
+// 程序将要退出本地缓存部分数据
+- (void)saveData {
+    MYLog(@"%@",NSHomeDirectory());
+    if (self.channelModels.count > 0) {
+        if ([DBManager isExistsTableWithName:channelTableName]) {
+          [DBManager dropTableWithName:channelTableName completeBlock:^(BOOL result, NSArray *resultData) {}];
+        }
+        ChannelModel *model = [self.channelModels firstObject];
+        NSMutableDictionary *dic = [model transitionToDic];
+        for (NSString *key in dic.allKeys) {
+            [dic setObject:@"NSString" forKey:key];
+        }
+        __block BOOL exResult = NO;
+        [DBManager createTableWithName:channelTableName parameter:dic primaryKey:@"channel_id" completeBlock:^(BOOL result, NSArray *resultData) {
+            exResult = result;
+        }];
+        if (exResult) {
+            for (ChannelModel *model in self.channelModels) {
+                NSMutableDictionary *dic = [model transitionToDic];
+                [DBManager insertDataInTableWithName:channelTableName parameter:dic completeBlock:^(BOOL result, NSArray *resultData) {
+                }];
+            }
+        }
+    }
+    
+    if (self.rencommendModels.count > 0) {
+        if ([DBManager isExistsTableWithName:rencommendTableName]) {
+            [DBManager dropTableWithName:rencommendTableName completeBlock:^(BOOL result, NSArray *resultData) {}];
+        }
+        RencommendModel *model = [self.rencommendModels firstObject];
+        NSMutableDictionary *dic = [model transitionToDic];
+        for (NSString *key in dic.allKeys) {
+            [dic setObject:@"NSString" forKey:key];
+        }
+        __block BOOL exResult = NO;
+        [DBManager createTableWithName:rencommendTableName parameter:dic primaryKey:@"content_id" completeBlock:^(BOOL result, NSArray *resultData) {
+            exResult = result;
+        }];
+        if (exResult) {
+            for (RencommendModel *model in self.rencommendModels) {
+                NSMutableDictionary *dic = [model transitionToDic];
+                [DBManager insertDataInTableWithName:rencommendTableName parameter:dic completeBlock:^(BOOL result, NSArray *resultData) {
+                }];
+            }
+        }
+    }
+    
+    if (self.allChannelsModelDic.allKeys.count > 0) {
+        // 每频道保存20条数据
+        for (NSString *key in self.allChannelsModelDic.allKeys) {
+            NSString *tableName = [NSString stringWithFormat:@"channelId%@_%@",key,[[Encrypt getMessageDigestMD5:key] substringToIndex:10]];
+            if ([DBManager isExistsTableWithName:tableName]) {
+                [DBManager dropTableWithName:tableName completeBlock:^(BOOL result, NSArray *resultData) {}];
+            }
+            NSArray *everyChannalData = [self.allChannelsModelDic objectForKey:key];
+            id data = [everyChannalData lastObject];
+            if ([data isKindOfClass:[SmallCellModel class]]) {
+                NSMutableDictionary *dic = [self getAllPropertyName:[SmallCellModel class]];
+                for (NSString *key1 in dic.allKeys) {
+                    [dic setObject:@"NSString" forKey:key1];
+                }
+                __block BOOL exResult = NO;
+                [DBManager createTableWithName:tableName parameter:dic primaryKey:@"article_id" completeBlock:^(BOOL result, NSArray *resultData) {
+                    exResult = result;
+                }];
+                if (exResult) {
+                    for (int i = 0; i < 20; i++) {
+                        SmallCellModel *smallCellModel = nil;
+                        if (i < everyChannalData.count) {
+                            smallCellModel = everyChannalData[i];
+                            NSMutableDictionary *modelDic = [smallCellModel transitionToDic];
+                            [DBManager insertDataInTableWithName:tableName parameter:modelDic completeBlock:^(BOOL result, NSArray *resultData) {
+                            }];
+                        }
+                    }
+                }
+            }else if ([data isKindOfClass:[NSArray class]]) {
+                NSArray<NSArray *> *array = everyChannalData;
+                SpecialModel *specialModel = (SpecialModel *)[[array lastObject] firstObject];
+                NSMutableDictionary *dic = [specialModel transitionToDic];
+                for (NSString *key1 in dic.allKeys) {
+                    [dic setObject:@"NSString" forKey:key1];
+                }
+                __block BOOL exResult = NO;
+                [DBManager createTableWithName:tableName parameter:dic primaryKey:@"col_id" completeBlock:^(BOOL result, NSArray *resultData) {
+                    exResult = result;
+                }];
+                if (exResult) {
+                    for (NSArray *subArray in array) {
+                        for (int i = 0; i < 20; i++) {
+                            SpecialModel *specialModel = nil;
+                            if (i < subArray.count) {
+                                specialModel = subArray[i];
+                                NSMutableDictionary *modelDic = [specialModel transitionToDic];
+                                [DBManager insertDataInTableWithName:tableName parameter:modelDic completeBlock:^(BOOL result, NSArray *resultData) {
+                                }];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 - (NSMutableArray *)channelModels {
     if (_channelModels == nil) {
@@ -88,7 +289,6 @@
 
 - (NSURLSessionDataTask *)requestDataWithChannelModel:(ChannelModel *)channelModel
                                                  page:(NSString *)page
-                                       automaticMerge:(BOOL)merge
                                               success:(void (^)(ChannelModel *channelModel, NSArray *models))successHandler
                                               failure:(void (^)(NSURLSessionDataTask * task, NSError *error))failureHandler {
     
@@ -101,7 +301,8 @@
             if (originData) {
                 NSArray *any = [originData lastObject];
                 SpecialModel *specialModel = [any lastObject];
-                if (!specialModel.hasnext) {
+                if ([specialModel.has_next isEqualToString:@"0"]) {
+                    successHandler(channelModel,nil);
                     return nil;
                 }
             }
@@ -123,25 +324,14 @@
     } success:^(NSURLSessionDataTask *task, id responseObject) {
         // 处理数据
         NSMutableArray *arrays = [self dealDataWithResponseObject:responseObject channelModel:channelModel];
-        // 是否合并
-        if (merge) {
-            // 数据合并处理
-            NSMutableArray *mergedArrays = nil;
-            if (page.intValue == 0) {
-                // 刷新或者是首次请求
-                mergedArrays = [self mergeModelDataArrayWithChannelModel:channelModel newModels:arrays isFront:YES];
-            }else{
-                // 加载更多数据
-                mergedArrays = [self mergeModelDataArrayWithChannelModel:channelModel newModels:arrays isFront:NO];
-            }
-            if (mergedArrays) {
-                arrays = mergedArrays;
-            }
-            // 数据备份
+        // 数据合并处理
+        BOOL result = [self mergeModelDataArrayWithChannelModel:channelModel newModels:arrays page:page.intValue];
+        if (!result) {
+            // 首次数据备份
             [self.allChannelsModelDic setObject:arrays forKey:channelModel.channel_id];
         }
         // 返回上层
-        successHandler(channelModel,arrays);
+        successHandler(channelModel,[self.allChannelsModelDic objectForKey:channelModel.channel_id]);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         failureHandler(task,error);
     }];
@@ -160,35 +350,20 @@
     NSMutableArray *arrays = [NSMutableArray array];
     if ([model.chnl_type isEqualToString:@"col"]) {
         // 专题类型
-        NSMutableArray *unbook = responseObject[@"unbook_list"];
-        NSMutableArray *book = responseObject[@"book_list"];
-        NSMutableArray *recommend = responseObject[@"recommend_list"];
+        NSArray *keys = @[@"recommend_list",@"book_list",@"unbook_list"];
         NSString *hasNext = responseObject[@"hasnext"];
-        
-        NSMutableArray *unbookModels = [NSMutableArray array];
-        NSMutableArray *bookModels = [NSMutableArray array];
-        NSMutableArray *recommendModels = [NSMutableArray array];
-        for (NSDictionary *dic in recommend) {
-            SpecialModel *model = [[SpecialModel alloc] initWithDic:dic];
-            model.type = SpecialTypeRecommend;
-            model.hasnext = hasNext.boolValue;
-            [recommendModels addObject:model];
+        for (int i = 0; i < 3; i++) {
+            NSString *key = keys[i];
+            NSMutableArray *data = responseObject[key];
+            NSMutableArray *save = [NSMutableArray array];
+            for (NSDictionary *dic in data) {
+                SpecialModel *model = [[SpecialModel alloc] initWithDic:dic];
+                model.type = [NSString stringWithFormat:@"%d",i];
+                model.has_next = hasNext;
+                [save addObject:model];
+            }
+            [arrays addObject:save];
         }
-        for (NSDictionary *dic in book) {
-            SpecialModel *model = [[SpecialModel alloc] initWithDic:dic];
-            model.type = SpecialTypeBook;
-            model.hasnext = hasNext.boolValue;
-            [bookModels addObject:model];
-        }
-        for (NSDictionary *dic in unbook) {
-            SpecialModel *model = [[SpecialModel alloc] initWithDic:dic];
-            model.type = SpecialTypeUnbook;
-            model.hasnext = hasNext.boolValue;
-            [unbookModels addObject:model];
-        }
-        [arrays addObject:recommendModels];
-        [arrays addObject:bookModels];
-        [arrays addObject:unbookModels];
     }else{
         // 其他类型
         NSArray *array = responseObject[@"list"];
@@ -201,21 +376,19 @@
 }
 
 
-/**
- 拼接更多数据的模型数组
-
- @param model 当前频道的模型
- @param array 新的模型数组
- @param front 是否在前边拼接
- @return 拼接完成的数组
- */
-- (NSMutableArray *)mergeModelDataArrayWithChannelModel:(ChannelModel *)model newModels:(NSMutableArray *)array isFront:(BOOL)front {
+- (BOOL)mergeModelDataArrayWithChannelModel:(ChannelModel *)model newModels:(NSMutableArray *)array page:(int)page {
     // 获取原数据
+    BOOL result = NO;
+    NSString *info = [self.fromDataBaseInfo objectForKey:model.channel_id];
+    if ([info isEqualToString:@"1"]) {
+        [self.allChannelsModelDic removeObjectForKey:model.channel_id];
+        [self.fromDataBaseInfo setObject:@"0" forKey:model.channel_id];
+    }
     NSMutableArray *originData = [self.allChannelsModelDic objectForKey:model.channel_id];
     
     if (originData) {
-        if (!front) {
-            
+        
+        if (page != 0) {
             if ([model.chnl_type isEqualToString:@"col"]) {
                 for (NSMutableArray *subArray in array) {
                     NSInteger index = [array indexOfObject:subArray];
@@ -230,7 +403,7 @@
                 [originData addObjectsFromArray:disposedArray];
             }
         }else{
-            
+            // 刷新或者是首次请求
             if ([model.chnl_type isEqualToString:@"col"]) {
                 for (NSMutableArray *subArray in array) {
                     NSInteger index = [array indexOfObject:subArray];
@@ -266,9 +439,9 @@
             }
             
         }
-        
+        result = YES;
     }
-    return originData;
+    return result;
 }
 
 /**

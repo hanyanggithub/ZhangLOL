@@ -29,7 +29,6 @@
 #define APP_CONFIG              @"http://down.qq.com/qqtalk/lolApp/config/appconfig.json"
 
 
-
 // 登录完成
 // 发现模块顶部布局数据(粉丝俱乐部部分)
 #define CLUB_URL  @"http://qt.qq.com/php_cgi/lol_mobile/club/varcache_team_entrancev2.php?version=243370&plat=ios"

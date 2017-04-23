@@ -17,8 +17,7 @@
 #import "SearchViewController.h"
 
 
-@interface MessageViewController ()<UITableViewDelegate,UITableViewDataSource,SWRevealViewControllerDelegate,MessageScrollViewDataSource,UINavigationControllerDelegate,UITabBarControllerDelegate>
-@property(nonatomic, strong)UIButton *menuButton;
+@interface MessageViewController ()<UITableViewDelegate,UITableViewDataSource,MessageScrollViewDataSource,UINavigationControllerDelegate,UITabBarControllerDelegate>
 @property(nonatomic, strong)UIButton *searchButton;
 @property(nonatomic, strong)UITableView *tableView;
 @property(nonatomic, strong)MessageScrollView *messageScrollView;
@@ -53,14 +52,22 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self settingSWRevealViewController];
+    [self.revealViewController tapGestureRecognizer];
     [self createSubviews];
     [self layoutNavigationBar];
+    // 设置缓存数
     [CacheManager defaultSettingSDImageCache];
-    [self requestChannelData];
-    [self requestRecommendData];
+    
+    if ([ZhangLOLNetwork netUsable]) {
+        [self requestChannelData];
+        [self requestRecommendData];
+    }else{
+        // 读取本地数据
+        [self.viewModel readDataFromDB];
+        [self showView];
+    }
+    [self monitoring];
 }
-
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self.recommendView startAutoScrolling];
@@ -70,36 +77,12 @@
     [super viewWillDisappear:animated];
     [self.recommendView stopAutoScrolling];
 }
-- (void)settingSWRevealViewController {
-    SWRevealViewController *sw = [self revealViewController];
-    ;
-    sw.frontViewPosition = FrontViewPositionLeftSideMostRemoved;
-    sw.delegate = self;
-    [sw panGestureRecognizer];
-    [sw tapGestureRecognizer];
-}
+
 - (void)layoutNavigationBar {
+    self.haveMenuButton = YES;
     self.navigationController.delegate = self;
     [self.view insertSubview:self.customNaviBar aboveSubview:self.tableView];
     [self.customNaviBar setBackgroundImage:[UIImage imageNamed:@"navitransparentbg"] forBarMetrics:UIBarMetricsDefault];
-    // 添加item
-    self.menuButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.menuButton.frame = CGRectMake(0, 0, 36, 36);
-    self.menuButton.layer.cornerRadius = 18;
-    self.menuButton.layer.masksToBounds = YES;
-    self.menuButton.layer.borderWidth = 1;
-    self.menuButton.layer.borderColor = MAIN_COLOR.CGColor;
-    id appDelegate = [UIApplication sharedApplication].delegate;
-    NSDictionary *userInfo = [appDelegate valueForKey:@"userInfo"];
-    if (userInfo) {
-        NSURL *url = [NSURL URLWithString:userInfo[@"figureurl_qq_1"]];
-        [self.menuButton sd_setBackgroundImageWithURL:url forState:UIControlStateNormal placeholderImage:[UIImage imageNamed:@"chat_room_push_news_default_header"] options:SDWebImageRetryFailed|SDWebImageProgressiveDownload];
-    }else{
-        [self.menuButton setBackgroundImage:[UIImage imageNamed:@"chat_room_push_news_default_header"] forState:UIControlStateNormal];
-    }
-    [self.menuButton addTarget:self action:@selector(menuButtonClicked) forControlEvents:UIControlEventTouchUpInside];
-    UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:self.menuButton];
-    self.customNaviItem.leftBarButtonItem = leftItem;
     
     self.searchButton = [UIButton buttonWithType:UIButtonTypeCustom];
     self.searchButton.frame = CGRectMake(0, 0, 36, 36);
@@ -108,15 +91,8 @@
     [self.searchButton addTarget:self action:@selector(searchButtonClicked) forControlEvents:UIControlEventTouchUpInside];
     UIBarButtonItem *rightItem = [[UIBarButtonItem alloc] initWithCustomView:self.searchButton];
     self.customNaviItem.rightBarButtonItem = rightItem;
-    
 }
-- (void)menuButtonClicked {
-    SWRevealViewController *sw = [self revealViewController];
-    if (sw.frontViewPosition == FrontViewPositionLeft) {
-        self.view.userInteractionEnabled = NO;
-    }
-    [sw revealToggleAnimated:YES];
-}
+
 - (void)searchButtonClicked {
     SearchViewController *searchViewController = [[SearchViewController alloc] init];
     searchViewController.viewModel = self.viewModel;
@@ -124,7 +100,6 @@
 }
 
 - (void)createSubviews {
-    
     self.tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, self.view.width, SCREEN_HEIGHT - TABBAR_HEIGHT) style:UITableViewStylePlain];
     self.tableView.showsVerticalScrollIndicator = NO;
     self.tableView.rowHeight = SCREEN_HEIGHT - TABBAR_HEIGHT - CHANNELBAR_HEIGHT - NAVI_STATUS_BAR_HEIGHT;
@@ -146,15 +121,41 @@
     __weak typeof(self) weakSelf = self;
     [self.refreshHeader refreshHeaderViewStatusChangedBlock:^(RefreshHeaderViewStatus status) {
         if (status == RefreshHeaderViewStatusRefreshing){
-            [weakSelf requestRecommendData];
-            [weakSelf refreshDataForCurrentChannel];
+            if (![ZhangLOLNetwork netUsable]) {
+                [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:0 green:0 blue:0 alpha:0.7]];
+                [SVProgressHUD setForegroundColor:MAIN_COLOR];
+                [SVProgressHUD showErrorWithStatus:@"请检测网络状态"];
+                [SVProgressHUD dismissWithDelay:4];
+                [weakSelf.refreshHeader stopRefreshing];
+            }else{
+                [weakSelf requestRecommendData];
+                [weakSelf refreshDataForCurrentChannel];
+            }
         }
     }];
 
     self.recommendView = [[RecommendView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.width, RECOMMEND_VIEW_HEIGHT)];
     self.tableView.tableHeaderView = self.recommendView;
 }
-
+- (void)showView {
+    // channel
+    NSMutableArray *channelData = [NSMutableArray arrayWithArray:self.viewModel.channelModels];
+    [channelData removeObjectAtIndex:2];
+    [channelData removeObjectAtIndex:2];
+    [self.channelView updateWithChannelModels:channelData];
+    self.messageScrollView.allChannelCount = [self.channelView channelCount];
+    
+    // recommed
+    [self.recommendView updateWithModels:self.viewModel.rencommendModels];
+    
+    // newet
+    ChannelModel *channelModel = [self.viewModel.channelModels firstObject];
+    NSArray *newestModels = self.viewModel.allChannelsModelDic[channelModel.channel_id];
+    [self.messageScrollView updateTableViewsWithModels:newestModels index:self.messageScrollView.currentIndex info:nil];
+    [self.everyChannelPages setObject:@"0" forKey:channelModel.channel_id];
+    
+    
+}
 - (void)controllNaviBarStatusWithContentOffsetY:(CGFloat)contentOffsetY {
     
     if (contentOffsetY > RECOMMEND_VIEW_HEIGHT - 64 && self.isVague == NO) {
@@ -176,11 +177,9 @@
 
 - (void)controllNaviBarButtonHiddenWithContentOffsetY:(CGFloat)contentOffsetY {
     if (contentOffsetY < -20) {
-        self.menuButton.hidden = YES;
-        self.searchButton.hidden = YES;
+        self.customNaviBar.hidden = YES;
     }else{
-        self.menuButton.hidden = NO;
-        self.searchButton.hidden = NO;
+        self.customNaviBar.hidden = NO;
     }
 }
 
@@ -235,37 +234,48 @@
     }
 }
 
-
+- (void)monitoring {
+    [ZhangLOLNetwork setReachabilityStatusChangeBlock:^(ZhangLOLReachabilityStatus status) {
+        ZhangLOLReachabilityStatus priorNetStatus = [ZhangLOLNetwork priorNetStatus];
+        if (status == ZhangLOLReachabilityStatusNotReachable) {
+           // show a net error view
+        }
+        if (status != ZhangLOLReachabilityStatusNotReachable) {
+            // if error view showed remove
+        }
+        if (status != ZhangLOLReachabilityStatusNotReachable && priorNetStatus != ZhangLOLReachabilityStatusNotReachable) {
+            // return
+            
+        }
+        if (status != ZhangLOLReachabilityStatusNotReachable && priorNetStatus == ZhangLOLReachabilityStatusNotReachable) {
+            [self requestChannelData];
+            [self requestRecommendData];
+        }
+    }];
+}
 
 - (void)requestNewestData {
     // 加载资讯页最新频道数据
     __weak typeof(self) weakSelf = self;
-    
     ChannelModel *model = self.viewModel.channelModels[0];
-    
-    [self.viewModel requestDataWithChannelModel:model page:@"0" automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
+    [self.viewModel requestDataWithChannelModel:model page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
         
-        [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
+        [weakSelf.messageScrollView updateTableViewsWithModels:models index:weakSelf.messageScrollView.currentIndex info:nil];
         [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         NSLog(@"%@",error);
     }];
-    
 }
 
 - (void)requestOtherChannelData {
     
     __weak typeof(self) weakSelf = self;
-    
     for (int i = 1; i < self.viewModel.channelModels.count; i++) {
-        
         ChannelModel *model = self.viewModel.channelModels[i];
-        
-        [self.viewModel requestDataWithChannelModel:model page:@"0" automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
+        [self.viewModel requestDataWithChannelModel:model page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
             // 设置初始数据页数
             [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
-            
         } failure:^(NSURLSessionDataTask *task, NSError *error) {
             NSLog(@"%@",error);
         }];
@@ -314,7 +324,7 @@
 - (void)refreshDataForCurrentChannel {
     // 刷新资讯页当前显示的频道数据
     __weak typeof(self) weakSelf = self;
-    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[self.messageScrollView.currentIndex] page:@"0" automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
+    [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[self.messageScrollView.currentIndex] page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
         [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
         [weakSelf.refreshHeader stopRefreshing];
         
@@ -331,15 +341,12 @@
         // 禁用侧滑
         self.revealViewController.panGestureRecognizer.enabled = NO;
     }
+    // (self.revealViewController.panGestureRecognizer.enabled)添加侧滑
     if (viewController == self && !self.revealViewController.panGestureRecognizer.enabled) {
         // 开启侧滑
         self.revealViewController.panGestureRecognizer.enabled = YES;
     }
-    
-//    if ([viewController isMemberOfClass:[SearchViewController class]]) {
-//        // .m扩展中的属性居然可以直接引用(目测是因为有这个系统属性所以可以)，xcode——bug
-//        [viewController.inputView becomeFirstResponder];
-//    }
+
 }
 
 #pragma mark - UITableViewDelegate
@@ -375,29 +382,6 @@
     [self settingAutoScrollingWithContentOffsetY:scrollView.contentOffset.y];
 }
 
-#pragma mark - SWRevealViewControllerDelegate
-
-- (void)revealControllerPanGestureBegan:(SWRevealViewController *)revealController {
-    // 关闭滑动交互
-    self.view.userInteractionEnabled = NO;
-    revealController.springDampingRatio = 0.8;
-}
-- (void)revealControllerPanGestureEnded:(SWRevealViewController *)revealController {
-    if (revealController.frontViewPosition != FrontViewPositionRight) {
-        self.view.userInteractionEnabled = YES;
-    }
-    
-}
-- (void)revealController:(SWRevealViewController *)revealController willMoveToPosition:(FrontViewPosition)position {
-    if (position == FrontViewPositionLeft) {
-        // 开启滑动交互
-        self.view.userInteractionEnabled = YES;
-        revealController.springDampingRatio = 1.0;
-    }else if (position == FrontViewPositionRight) {
-        self.view.userInteractionEnabled = NO;
-    }
-}
-
 #pragma mark - MessageScrollViewDataSource
 - (void)messageScrollViewWillShowTableViewWithIndex:(NSInteger)index {
     ChannelModel *model = nil;
@@ -426,10 +410,22 @@
     
     NSString *currentPage = [self.everyChannelPages objectForKey:model.channel_id];
     NSString *page = [NSString stringWithFormat:@"%d",currentPage.intValue + 1];
+    
+    if (![ZhangLOLNetwork netUsable]) {
+        [SVProgressHUD setBackgroundColor:[UIColor colorWithRed:0 green:0 blue:0 alpha:0.7]];
+        [SVProgressHUD setForegroundColor:MAIN_COLOR];
+        [SVProgressHUD showErrorWithStatus:@"请检测网络状态"];
+        [SVProgressHUD dismissWithDelay:4 completion:^{
+          self.isLoadingMore = NO;
+        }];
+        return;
+    }
     __weak typeof(self) weakSelf = self;
-    [self.viewModel requestDataWithChannelModel:model page:page automaticMerge:YES success:^(ChannelModel *channelModel, NSArray *models) {
-        [weakSelf.messageScrollView updateTableViewsWithModels:models index:index info:nil];
-        [weakSelf.everyChannelPages setObject:page forKey:model.channel_id];
+    [self.viewModel requestDataWithChannelModel:model page:page success:^(ChannelModel *channelModel, NSArray *models) {
+        if (model) {
+            [weakSelf.messageScrollView updateTableViewsWithModels:models index:index info:nil];
+            [weakSelf.everyChannelPages setObject:page forKey:model.channel_id];
+        }
         weakSelf.isLoadingMore = NO;
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         weakSelf.isLoadingMore = NO;

@@ -31,6 +31,11 @@
     
     if ([otherGestureRecognizer.view isMemberOfClass:NSClassFromString(@"MessageScrollView")] || [otherGestureRecognizer isMemberOfClass:NSClassFromString(@"SWRevealViewControllerPanGestureRecognizer")]) {
         return NO;
+    }else{
+        id systemTarget = otherGestureRecognizer.view.viewController.navigationController.interactivePopGestureRecognizer.delegate;
+        if (![otherGestureRecognizer isKindOfClass:NSClassFromString(@"UIScrollViewPanGestureRecognizer")] && [systemTarget isKindOfClass:NSClassFromString(@"_UINavigationInteractiveTransition")]) {
+            return NO;
+        }
     }
     
     return YES;

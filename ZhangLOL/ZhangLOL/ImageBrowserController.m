@@ -35,22 +35,16 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.enableFullScreenPop = YES;
+    self.haveBackButton = YES;
     [self createTopBarBottomBar];
     [self methodOne];
 }
 
 - (void)createTopBarBottomBar {
-    
     // top
     [self.customNaviBar setBackgroundImage:[UIImage imageNamed:@"navitransparentbg"] forBarMetrics:UIBarMetricsDefault];
     [self.view addSubview:self.customNaviBar];
-    UIButton *backButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    backButton.frame = CGRectMake(0, 0, 22, 40);
-    [backButton setImage:[UIImage imageNamed:@"nav_btn_back_tiny_normal"] forState:UIControlStateNormal];
-    [backButton setImage:[UIImage imageNamed:@"nav_btn_back_tiny__pressed"] forState:UIControlStateHighlighted];
-    [backButton addTarget:self action:@selector(pop) forControlEvents:UIControlEventTouchUpInside];
-    UIBarButtonItem *leftItem = [[UIBarButtonItem alloc] initWithCustomView:backButton];
-    self.customNaviItem.leftBarButtonItem = leftItem;
     
     UIButton *saveButton = [UIButton buttonWithType:UIButtonTypeCustom];
     saveButton.frame = CGRectMake(0, 0, 32, 32);
@@ -77,29 +71,38 @@
     
 }
 - (void)saveButtonClicked {
-    // 保存
-    UIImageWriteToSavedPhotosAlbum(self.photoView.currentImage, self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
+    if (self.photoView.currentImage) {
+        [SVProgressHUD show];
+        UIImageWriteToSavedPhotosAlbum(self.photoView.currentImage, self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
+    }
     
 }
 - (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
     if (error) {
         MYLog(@"image = %@, error = %@, contextInfo = %@", image, error, contextInfo);
-        [SVProgressHUD showErrorWithStatus:@"保存失败"];
-        [SVProgressHUD dismissWithDelay:0.5];
+        [SVProgressHUD dismiss];
+        UIAlertController *alertVC = [UIAlertController alertControllerWithTitle:@"添加到系统相册失败" message:@"请打开 设置-隐私-照片 来进行设置" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            [alertVC dismissViewControllerAnimated:YES completion:^{
+                
+            }];
+        }];
+        [alertVC addAction:confirm];
+        [self presentViewController:alertVC animated:YES completion:nil];
+
     }else{
-        [SVProgressHUD showSuccessWithStatus:@"保存成功"];
-        [SVProgressHUD dismissWithDelay:0.5];
+        [SVProgressHUD showSuccessWithStatus:@"已存入系统相册"];
+        [SVProgressHUD dismissWithDelay:1];
     }
 }
 - (void)pop {
-    [super pop];
     [self.navigationController popViewControllerAnimated:YES];
 }
 // 方法1
 - (void)methodOne {
     // 加载html静态页面
     self.atlasTitle = self.cellModel.title;
-    [ZhangLOLNetwork HTML:self.cellModel.article_url parameters:nil progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+    [ZhangLOLNetwork GET:self.cellModel.article_url progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
         NSString *htmlCode = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
         if (htmlCode) {
             // 正则匹配图片url

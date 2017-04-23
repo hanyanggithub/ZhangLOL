@@ -8,15 +8,6 @@
 
 #import "BaseModel.h"
 
-typedef NS_ENUM(NSInteger, SpecialType) {
-    /* 未订阅 */
-    SpecialTypeUnbook,
-    /* 订阅 */
-    SpecialTypeBook,
-    /* 推荐 */
-    SpecialTypeRecommend
-};
-
 @interface SpecialModel : BaseModel
 
 @property(nonatomic, copy)NSString *author;
@@ -32,8 +23,8 @@ typedef NS_ENUM(NSInteger, SpecialType) {
 @property(nonatomic, copy)NSString *last_update;
 @property(nonatomic, copy)NSString *logo;
 // custom
-@property(nonatomic, assign)SpecialType type;       // unbook_list / book_list / recommend_list 决定分组
-@property(nonatomic, assign)BOOL hasnext;           // 是否支持加载更多
+@property(nonatomic, assign)NSString *type;       // unbook_list0 / book_list1 / recommend_list2 决定分组
+@property(nonatomic, copy)NSString *has_next;           // 是否支持加载更多
 
 
 

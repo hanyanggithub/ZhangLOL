@@ -16,7 +16,6 @@
         if (dic[@"id"]) {
            self.channel_id = dic[@"id"];
         }
-        
     }
     return self;
 }

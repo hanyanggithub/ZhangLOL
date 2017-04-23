@@ -104,7 +104,7 @@
     [self addSubview:self.pageControll];
     self.pageControll.frame = CGRectMake(0, 0, models.count * PAGR_CONTROLL_HEIGHT, PAGR_CONTROLL_HEIGHT);
     self.pageControll.center = CGPointMake(self.center.x, 0);
-    self.pageControll.bottom = self.bottom;
+    self.pageControll.bottom = self.bottom - 5;
     [self.pageControll setPages:models.count];
     
 }
@@ -191,11 +191,11 @@
     [self.pageControll setIndex:self.currentIndex];
     
     // 最大位置
-    if (scrollView.contentOffset.x == scrollView.width * (self.imagesViews.count - 1)) {
+    if (scrollView.contentOffset.x >= scrollView.width * (self.imagesViews.count - 1)) {
         scrollView.contentOffset = CGPointMake(scrollView.width, 0);
     }
     // 最小位置
-    if (scrollView.contentOffset.x == 0) {
+    if (scrollView.contentOffset.x <= 0) {
         scrollView.contentOffset = CGPointMake(scrollView.width * (self.imagesViews.count - 2), 0);
     }
     

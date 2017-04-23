@@ -16,7 +16,12 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor greenColor];
+    self.haveMenuButton = YES;
+    if (self.isLogin) {
+        [self showUnDevelopView];
+    }else{
+        [self showUnloginView];
+    }
 }
 
 - (void)didReceiveMemoryWarning {

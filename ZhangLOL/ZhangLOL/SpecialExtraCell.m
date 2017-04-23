@@ -127,12 +127,14 @@
         self.title.text = model.col_title;
         self.subTitle.text = model.last_news_title;
         self.time.text = [NSString stringWithFormat:@"%@更新",[self dealTimeWithDateString:model.last_update]];
-        if (model.type == SpecialTypeRecommend) {
+        if (![model.type isEqualToString:@"2"]) {
             self.time.hidden = YES;
             self.rightArrow.hidden = YES;
+            self.bookButton.hidden = NO;
         }else{
             self.time.hidden = NO;
             self.rightArrow.hidden = NO;
+            self.bookButton.hidden = YES;
         }
     }
 }

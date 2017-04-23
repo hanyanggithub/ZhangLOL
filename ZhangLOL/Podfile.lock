@@ -14,22 +14,23 @@ PODS:
   - AFNetworking/Serialization (3.1.0)
   - AFNetworking/UIKit (3.1.0):
     - AFNetworking/NSURLSession
+  - FMDB (2.6.2):
+    - FMDB/standard (= 2.6.2)
+  - FMDB/standard (2.6.2)
   - Masonry (1.0.2)
   - SDWebImage (4.0.0):
     - SDWebImage/Core (= 4.0.0)
   - SDWebImage/Core (4.0.0)
   - SVProgressHUD (2.1.2)
   - SWRevealViewController (2.3.0)
-  - ZFPlayer (2.1.3):
-    - Masonry
 
 DEPENDENCIES:
   - AFNetworking (~> 3.1.0)
+  - FMDB (~> 2.6.2)
   - Masonry (~> 1.0.2)
   - SDWebImage (~> 4.0.0)
   - SVProgressHUD (from `https://github.com/SVProgressHUD/SVProgressHUD.git`)
   - SWRevealViewController (~> 2.3.0)
-  - ZFPlayer
 
 EXTERNAL SOURCES:
   SVProgressHUD:
@@ -42,12 +43,12 @@ CHECKOUT OPTIONS:
 
 SPEC CHECKSUMS:
   AFNetworking: 5e0e199f73d8626b11e79750991f5d173d1f8b67
+  FMDB: 854a0341b4726e53276f2a8996f06f1b80f9259a
   Masonry: 7c429b56da9d4ee0bbb3ed77a5ea710d6a5df39e
   SDWebImage: 76a6348bdc74eb5a55dd08a091ef298e56b55e41
   SVProgressHUD: d65371a8e4482380deddb9fe60e14e59ddb30eb3
   SWRevealViewController: 6d3fd97f70112fd7cef9de14df4260eacce4c63a
-  ZFPlayer: 8dc82b4508fbba4ee59d0304c52e30f8b3390244
 
-PODFILE CHECKSUM: 0ac79b861b598445ba3ba3a875b3a633e58b823a
+PODFILE CHECKSUM: ef2ae3a18672e344738ec9b349e24958834023b6
 
 COCOAPODS: 1.2.0

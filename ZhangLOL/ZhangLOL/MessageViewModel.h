@@ -13,6 +13,7 @@
 
 @interface MessageViewModel : NSObject
 
+@property(nonatomic, assign)BOOL readFromDB;                                // 标识启动数据是否从数据库中读取
 @property(nonatomic, strong)NSMutableArray *channelModels;                  // 频道模型
 @property(nonatomic, strong)NSMutableArray *rencommendModels;               // 轮播模型
 @property(nonatomic, strong)NSMutableDictionary *allChannelsModelDic;       // 所有频道单元格模型
@@ -36,12 +37,9 @@
 
 /**
  请求频道对应的单页数据
-
- @param merge 是否和已有的模型数组合并
  */
 - (NSURLSessionDataTask *)requestDataWithChannelModel:(ChannelModel *)channelModel
                                                  page:(NSString *)page
-                                       automaticMerge:(BOOL)merge
                                               success:(void (^)(ChannelModel *channelModel, NSArray *models))successHandler
                                               failure:(void (^)(NSURLSessionDataTask * task, NSError *error))failureHandler;
 
@@ -52,5 +50,7 @@
  */
 - (void)saveModelTag:(SmallCellModel *)model;
 
+// 读取本地数据
+- (void)readDataFromDB;
 
 @end

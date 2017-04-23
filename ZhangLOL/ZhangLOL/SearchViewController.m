@@ -32,6 +32,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.enableFullScreenPop = YES;
     [self createSubviews];
     [self settingNaviBar];
 }
@@ -118,6 +119,7 @@
 }
 - (void)createSubviews {
     self.contentView = [[NewestTableView alloc] initWithFrame:CGRectMake(0, 64, self.view.width, self.view.height - 64) style:UITableViewStylePlain];
+    self.contentView.backgroundColor = [UIColor whiteColor];
     self.contentView.delegate = self;
     [self.view addSubview:self.contentView];
     
@@ -192,10 +194,13 @@
                 }
                 self.models = arrays;
                 self.contentView.models = arrays;
-                [self.contentView reloadData];
+                
                 if (self.models.count > 0) {
+                    [self removeErrorView];
+                    [self.contentView reloadData];
                     self.refreshHeaderView.hidden = NO;
                 }else{
+                    [self showErrorViewWithMessage:@"没有找到搜索对象"];
                     self.refreshHeaderView.hidden = YES;
                 }
                 [self.refreshHeaderView stopRefreshing];

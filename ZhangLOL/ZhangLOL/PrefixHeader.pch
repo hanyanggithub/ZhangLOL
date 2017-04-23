@@ -17,16 +17,20 @@
 #import <UIImageView+WebCache.h>
 #import <UIButton+WebCache.h>
 #import <Masonry.h>
+#import <FMDB.h>
 #import <SWRevealViewController.h>
 #import <TencentOpenAPI/TencentOAuth.h>
 
 #import "Api.h"
 #import "SizeMarking.h"
 #import "ZhangLOLNetwork.h"
+#import "ImageBlur.h"
+#import "DBManager.h"
+#import "Encrypt.h"
 #import "UIView+Extension.h"
 #import "UIScrollView+Extension.h"
 #import "UIColor+Extension.h"
-#import "ImageBlur.h"
+
 
 #define MYDEBUG 1
 #if MYDEBUG

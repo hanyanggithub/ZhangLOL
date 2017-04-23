@@ -11,5 +11,6 @@
 @interface BaseModel : NSObject
 @property(nonatomic, assign)BOOL isRead;
 - (instancetype)initWithDic:(NSDictionary *)dic;
+- (NSMutableDictionary *)transitionToDic;
 
 @end

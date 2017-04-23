@@ -117,8 +117,8 @@
         self.typeLabel.textColor = [UIColor orangeColor];
         self.typeLabel.layer.borderColor = [UIColor orangeColor].CGColor;
     }else if ([str isEqualToString:@"活动"]){
-        self.typeLabel.textColor = [UIColor colorWithRed:0 green:150 blue:200 alpha:1.0];
-        self.typeLabel.layer.borderColor = [UIColor colorWithRed:0 green:150 blue:200 alpha:1.0].CGColor;
+        self.typeLabel.textColor = [UIColor colorWithhHexString:@"#00bfc8" Alpha:1.0];
+        self.typeLabel.layer.borderColor = [UIColor colorWithhHexString:@"#00bfc8" Alpha:1.0].CGColor;
     }else{
         self.typeLabel.textColor = [UIColor blackColor];
         self.typeLabel.layer.borderColor = [UIColor blackColor].CGColor;

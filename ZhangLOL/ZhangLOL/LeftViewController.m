@@ -7,13 +7,14 @@
 //
 
 #import "LeftViewController.h"
+#import "SettingViewController.h"
+#import <SWRevealViewController.h>
 
 #define LEFT_VIEW_BOTTOM_CELL_TAG   2000
 
 @interface LeftViewController ()
 
 @property(nonatomic, strong)UIImageView *bgImageView;
-
 @property(nonatomic, strong)UIImageView *userIcon;
 @property(nonatomic, strong)UILabel *nikeName;
 @property(nonatomic, strong)UIImageView *genderIcon;
@@ -25,7 +26,18 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self createSubviews];
-    
+}
+- (void)logoutSuccess {
+    [super logoutSuccess];
+    self.userInfo = nil;
+    [self.view removeSubviews];
+    [self createSubviews];
+}
+- (void)loginSuccess:(NSNotification *)notification {
+    [super loginSuccess:notification];
+    self.userInfo = notification.userInfo;
+    [self.view removeSubviews];
+    [self createSubviews];
 }
 - (void)createSubviews {
     // bg
@@ -272,6 +284,18 @@
     }
 }
 - (void)settingClicked {
-    NSLog(@"设置");
+    id appDelegate = [UIApplication sharedApplication].delegate;
+    SWRevealViewController *drawerVC = [appDelegate valueForKey:@"drawer"];
+    [drawerVC revealToggleAnimated:NO];
+    UITabBarController *tabVC = (UITabBarController *)drawerVC.frontViewController;
+    UINavigationController *currentNavi = tabVC.selectedViewController;
+    
+    SettingViewController *setting = [SettingViewController new];
+    [currentNavi pushViewController:setting animated:YES];
+    
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    return UIStatusBarStyleLightContent;
 }
 @end

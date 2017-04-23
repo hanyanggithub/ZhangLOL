@@ -6,9 +6,7 @@
 //  Copyright © 2017年 rengukeji. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
-
-@class LeftViewController;
+#import "BaseViewController.h"
 
 @protocol LeftViewControllerDelegate <NSObject>
 
@@ -16,7 +14,7 @@
 
 @end
 
-@interface LeftViewController : UIViewController
+@interface LeftViewController : BaseViewController
 @property(nonatomic, weak)id<LeftViewControllerDelegate> delegate;
 @property(nonatomic, strong)NSDictionary *userInfo;
 @end
