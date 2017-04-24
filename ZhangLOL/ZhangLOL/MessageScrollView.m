@@ -16,7 +16,7 @@
 #import "HoverView.h"
 #import "MessageViewModel.h"
 #import "SmallCellModel.h"
-#import "RefreshFooterView.h"
+
 
 @interface MessageScrollView ()<UITableViewDelegate,ChannelViewDelegate> {
     NSMutableArray * _reusableTables;
@@ -103,6 +103,7 @@
         [self addSubview:tableView];
         [self.tableViews addObject:tableView];
     }
+    self.refreshFooterView = [[RefreshFooterView alloc] initWithScrollView:[self.tableViews firstObject]];
 }
 
 
@@ -160,11 +161,10 @@
 - (void)loadMoreInteractionWithScrollView:(UIScrollView *)scrollView {
     UITableView *tableView = [self currentTableView];
     if (tableView == scrollView) {
-        // 每当滑动到距离最下1.5倍tableView.height时静默加载更多
-//        NSLog(@"%f,%f",tableView.contentOffset.y,tableView.contentSize.height);
+        // 每当滑动到距离最下0.5倍tableView.height时静默加载更多
         NSNumber *isLoadingMore = [self.viewController valueForKey:@"isLoadingMore"];
         BOOL isLoading =  isLoadingMore.boolValue;
-        if (tableView.contentSize.height - tableView.contentOffset.y <= tableView.height * 1.5 && !isLoading) {
+        if (tableView.contentSize.height - tableView.contentOffset.y - tableView.height <= tableView.height *0.5 && !isLoading) {
             if ([self.dataSource respondsToSelector:@selector(messageScrollViewSubTableViewShouldLoadMoreDataWithIndex:)]) {
                 [self.dataSource messageScrollViewSubTableViewShouldLoadMoreDataWithIndex:self.currentIndex];
             }
@@ -287,6 +287,7 @@
     }
     self.currentIndex = index;
     [self dealReusableTablesView:index];
+    [self.refreshFooterView setOtherScrollView:self.tableViews[self.currentIndex]];
     if ([self.scrollDelegate respondsToSelector:@selector(messageScrollViewScrolledIndex:)]) {
         [self.scrollDelegate messageScrollViewScrolledIndex:index];
     }
@@ -298,6 +299,7 @@
         [self willShowTableViewWithIndex:index];
         [self setContentOffset:CGPointMake(self.width * index, 0) animated:NO];
         self.currentIndex = index;
+        [self.refreshFooterView setOtherScrollView:self.tableViews[self.currentIndex]];
         [self dealReusableTablesView:index];
     }
 }

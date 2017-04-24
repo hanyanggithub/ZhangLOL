@@ -32,7 +32,7 @@ NSString * const refreshFooterViewRefreshingText = @"努力获取中";
 
 - (instancetype)initWithScrollView:(UIScrollView *)scrollView {
 
-    self = [super initWithFrame:CGRectMake(0, CGRectGetMaxY(scrollView.frame), scrollView.frame.size.width, REFRESH_FOOTER_HEIGHT)];
+    self = [super initWithFrame:CGRectMake(scrollView.frame.origin.x, CGRectGetMaxY(scrollView.frame), scrollView.frame.size.width, REFRESH_FOOTER_HEIGHT)];
     if (self) {
         self.scrollView = scrollView;
         self.scrollView.backgroundColor = [UIColor clearColor];
@@ -69,7 +69,21 @@ NSString * const refreshFooterViewRefreshingText = @"努力获取中";
     }
     return self;
 }
+- (void)setOtherScrollView:(UIScrollView *)scrollView {
+    [self.scrollView removeObserver:self forKeyPath:@"contentOffset"];
+    [self.scrollView removeObserver:self forKeyPath:@"panGestureRecognizer.state"];
+    [self.scrollView removeObserver:self forKeyPath:@"contentSize"];
+    self.scrollView = scrollView;
+    self.scrollView.backgroundColor = [UIColor clearColor];
+    self.originalFrame = CGRectMake(scrollView.frame.origin.x, CGRectGetMaxY(scrollView.frame), scrollView.frame.size.width, REFRESH_FOOTER_HEIGHT);
+    [self.scrollView.superview insertSubview:self belowSubview:self.scrollView];
+    self.frame = self.originalFrame;
+    [self.scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:nil];
+    [self.scrollView addObserver:self forKeyPath:@"panGestureRecognizer.state" options:NSKeyValueObservingOptionNew context:nil];
+    [self.scrollView addObserver:self forKeyPath:@"contentSize" options:NSKeyValueObservingOptionNew context:nil];
 
+    
+}
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
                         change:(NSDictionary<NSKeyValueChangeKey,id> *)change
@@ -98,7 +112,7 @@ NSString * const refreshFooterViewRefreshingText = @"努力获取中";
         // 监听滑动手势的状态结束时判断滑动视图的偏移量决定是否开始刷新
         if ([keyPath isEqualToString:@"panGestureRecognizer.state"]) {
             NSInteger newState = new.integerValue;
-            if (newState == UIGestureRecognizerStateEnded && self.scrollView.contentOffset.y + self.scrollView.height > triggerY) {
+            if (newState == UIGestureRecognizerStateEnded && self.scrollView.contentOffset.y + self.scrollView.height > triggerY && self.status != RefreshFooterViewStatusRefreshing) {
                 [self startRefreshing];
             }
         }
@@ -123,12 +137,15 @@ NSString * const refreshFooterViewRefreshingText = @"努力获取中";
             if (newY >= oldY) {
                 CGFloat oldBottomY = oldY + self.scrollView.height;
                 if (oldBottomY < triggerY) {
+                    if (self.status != RefreshFooterViewStatusRefreshing) {
                     self.status = RefreshFooterViewStatusWaitRefreshing;
                     self.tipLabel.text = refreshFooterViewUpSlideRefreshText;
-                    
+                    }
                 }else{
+                    if (self.status != RefreshFooterViewStatusRefreshing) {
                     self.status = RefreshFooterViewStatusWaitUserLoosen;
                     self.tipLabel.text = refreshFooterViewLoosenRefreshText;
+                    }
                 }
             }else{
                 // 下滑时期
@@ -165,6 +182,7 @@ NSString * const refreshFooterViewRefreshingText = @"努力获取中";
 }
 - (void)startRefreshing {
     self.status = RefreshFooterViewStatusRefreshing;
+    self.tipLabel.text = refreshFooterViewRefreshingText;
     [UIView animateWithDuration:0.2 animations:^{
         self.scrollView.contentInset = UIEdgeInsetsMake(0, 0, REFRESH_FOOTER_HEIGHT, 0);
     } completion:^(BOOL finished) {
@@ -173,6 +191,7 @@ NSString * const refreshFooterViewRefreshingText = @"努力获取中";
 }
 - (void)stopRefreshing {
     self.status = RefreshFooterViewStatusWaitRefreshing;
+    self.tipLabel.text = refreshFooterViewUpSlideRefreshText;
     self.scrollView.contentInset = UIEdgeInsetsZero;
     [self.animationView stopAnimating];
 }

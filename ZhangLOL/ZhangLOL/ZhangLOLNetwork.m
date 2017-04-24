@@ -46,7 +46,7 @@ static ZhangLOLNetwork *singleton = nil;
     ZhangLOLNetwork *obj = [self singleton];
     NSMutableURLRequest *request = [obj.httpForResponseSerializerHtmlManager.requestSerializer requestWithMethod:@"GET" URLString:URLString parameters:nil error:nil];
     request.timeoutInterval = 20;
-    NSURLSessionDataTask *task = [obj.httpForResponseSerializerHtmlManager dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    __block NSURLSessionDataTask *task = [obj.httpForResponseSerializerHtmlManager dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         if (error) {
             failure(task,error);
         }else{
@@ -65,7 +65,7 @@ static ZhangLOLNetwork *singleton = nil;
     ZhangLOLNetwork *obj = [self singleton];
     NSMutableURLRequest *request = [obj.httpManager.requestSerializer requestWithMethod:@"GET" URLString:URLString parameters:parameters error:nil];
     request.timeoutInterval = 20;
-    NSURLSessionDataTask *task = [obj.httpManager dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    __block NSURLSessionDataTask *task = [obj.httpManager dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         if (error) {
             failure(task,error);
         }else{

@@ -17,6 +17,7 @@ typedef NS_ENUM(NSInteger,RefreshFooterViewStatus) {
 @interface RefreshFooterView : UIView
 
 - (instancetype)initWithScrollView:(UIScrollView *)scrollView;
+- (void)setOtherScrollView:(UIScrollView *)scrollView;
 - (RefreshFooterViewStatus)currentStatus;
 - (void)refreshFooterViewStatusChangedBlock:(void(^)(RefreshFooterViewStatus status))block;
 - (void)startRefreshing;

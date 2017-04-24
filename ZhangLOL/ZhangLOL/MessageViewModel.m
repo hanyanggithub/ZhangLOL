@@ -468,7 +468,7 @@ NSString * const rencommendTableName = @"rencommendTableName";
                     }
                     // 1.替换本地点击过的cellModel
                     originData = [self disposeModels:originData];
-                    
+                    [self.allChannelsModelDic setObject:originData forKey:model.channel_id];
                 }
                 
             }

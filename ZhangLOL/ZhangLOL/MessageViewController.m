@@ -433,14 +433,17 @@
         return;
     }
     __weak typeof(self) weakSelf = self;
+    [self.messageScrollView.refreshFooterView startRefreshing];
     [self.viewModel requestDataWithChannelModel:model page:page success:^(ChannelModel *channelModel, NSArray *models) {
         if (model) {
             [weakSelf.messageScrollView updateTableViewsWithModels:models index:index info:nil];
             [weakSelf.everyChannelPages setObject:page forKey:model.channel_id];
         }
         weakSelf.isLoadingMore = NO;
+        [weakSelf.messageScrollView.refreshFooterView stopRefreshing];
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         weakSelf.isLoadingMore = NO;
+        [weakSelf.messageScrollView.refreshFooterView stopRefreshing];
     }];
 }
 

@@ -141,16 +141,21 @@ NSString * const refreshHeaderViewRefreshingText = @"刷新中";
             // 下滑时期
             if (oldY >= newY) {
                 if (newY >= 0) {
+                    if (self.status != RefreshHeaderViewStatusRefreshing) {
                     self.status = RefreshHeaderViewStatusWaitUserSlideDown;
                     self.tipLabel.text = refreshHeaderViewDownSlideRefreshText;
+                    }
                     
                 }else if (newY > -REFRESH_TRIGGER_HEIGHT) {
+                    if (self.status != RefreshHeaderViewStatusRefreshing) {
                     self.status = RefreshHeaderViewStatusUserSlidingDown;
                     self.tipLabel.text = refreshHeaderViewDownSlideRefreshText;
+                    }
                 }else{
+                    if (self.status != RefreshHeaderViewStatusRefreshing) {
                     self.status = RefreshHeaderViewStatusWaitUserLoosen;
                     self.tipLabel.text = refreshHeaderViewLoosenRefreshText;
-                    
+                    }
                 }
             }else{
                 // 上滑时期

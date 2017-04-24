@@ -119,6 +119,9 @@
     }else if ([str isEqualToString:@"活动"]){
         self.typeLabel.textColor = [UIColor colorWithhHexString:@"#00bfc8" Alpha:1.0];
         self.typeLabel.layer.borderColor = [UIColor colorWithhHexString:@"#00bfc8" Alpha:1.0].CGColor;
+    }else if ([str isEqualToString:@"专题"]){
+        self.typeLabel.textColor = [UIColor blueColor];
+        self.typeLabel.layer.borderColor = [UIColor blueColor].CGColor;
     }else{
         self.typeLabel.textColor = [UIColor blackColor];
         self.typeLabel.layer.borderColor = [UIColor blackColor].CGColor;

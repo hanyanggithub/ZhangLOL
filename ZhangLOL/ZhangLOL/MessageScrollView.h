@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "RefreshFooterView.h"
 @class MessageViewModel;
 
 @protocol MessageScrollViewDelegate <NSObject>
@@ -29,6 +30,7 @@
 @property(nonatomic, assign, readonly)NSInteger currentIndex;    // 当前显示的索引位置
 @property(nonatomic, assign)NSInteger allChannelCount;           // 所有频道数
 @property(nonatomic, strong)MessageViewModel *viewModel;
+@property(nonatomic, strong)RefreshFooterView *refreshFooterView;
 // 刷新子频道数据
 - (void)updateTableViewsWithModels:(NSArray *)models index:(NSInteger)index info:(NSDictionary *)info;
 // 当前显示的表视图
