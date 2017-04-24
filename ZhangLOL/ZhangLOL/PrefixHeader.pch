@@ -31,6 +31,8 @@
 #import "UIScrollView+Extension.h"
 #import "UIColor+Extension.h"
 
+#import "AppDelegate.h"
+
 
 #define MYDEBUG 1
 #if MYDEBUG
@@ -43,8 +45,10 @@
 #define QQ_TOKEN_KEY            @"QQ_TOKEN_KEY"
 #define QQ_OPENID_KEY           @"QQ_OPENID_KEY"
 #define QQ_TOKEN_EXDATE_KEY     @"QQ_TOKEN_EXDATE_KEY"
+#define QQ_USERINFO_KEY         @"QQ_USERINFO_KEY"
 #define MAIN_COLOR  [ImageBlur getImagePixelColorWithPoint:[UIImage imageNamed:@"login_btn_qq_icon_normal"] point:CGPointMake(8, 8)]
 #define USER_DEFAULTS  [NSUserDefaults standardUserDefaults]
+#define APP_DELEGATE     ((AppDelegate *)[UIApplication sharedApplication].delegate)
 #define SYSTEM_VERSION  ([[UIDevice currentDevice] systemVersion].floatValue)
 
 

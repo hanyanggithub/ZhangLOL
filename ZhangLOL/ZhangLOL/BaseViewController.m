@@ -24,9 +24,9 @@
     self = [super init];
     if (self) {
         self.hidesBottomBarWhenPushed = YES;
-        extern NSString *loginSuccessNotificationName;
-        extern NSString *logoutNotificationName;
+    
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loginSuccess:) name:loginSuccessNotificationName object:nil];
+        extern NSString * const logoutNotificationName;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logoutSuccess) name:logoutNotificationName object:nil];
     }
     return self;
@@ -68,8 +68,7 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
     // 初始化登录态
-    id appDelegate = [UIApplication sharedApplication].delegate;
-    NSDictionary *userInfo = [appDelegate valueForKey:@"userInfo"];
+    NSDictionary *userInfo = APP_DELEGATE.userInfo;
     if (userInfo) {
         self.isLogin = YES;
     }else{
@@ -107,8 +106,7 @@
         self.menuButton.layer.masksToBounds = YES;
         self.menuButton.layer.borderWidth = 1;
         self.menuButton.layer.borderColor = MAIN_COLOR.CGColor;
-        id appDelegate = [UIApplication sharedApplication].delegate;
-        NSDictionary *userInfo = [appDelegate valueForKey:@"userInfo"];
+        NSDictionary *userInfo = APP_DELEGATE.userInfo;
         if (userInfo) {
             NSURL *url = [NSURL URLWithString:userInfo[@"figureurl_qq_1"]];
             [self.menuButton sd_setBackgroundImageWithURL:url forState:UIControlStateNormal placeholderImage:[UIImage imageNamed:@"chat_room_push_news_default_header"] options:SDWebImageRetryFailed|SDWebImageProgressiveDownload];
@@ -146,10 +144,9 @@
 }
 
 - (void)goToLogin {
-    id  appDelegate = [UIApplication sharedApplication].delegate;
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored"-Warc-performSelector-leaks"
-    [appDelegate performSelector:NSSelectorFromString(@"installLaunchModules") withObject:nil];
+    [APP_DELEGATE performSelector:NSSelectorFromString(@"installLaunchModules") withObject:nil];
     #pragma clang diagnostic pop
 }
 - (void)showUnloginView {

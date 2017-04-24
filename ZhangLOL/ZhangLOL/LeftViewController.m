@@ -284,8 +284,8 @@
     }
 }
 - (void)settingClicked {
-    id appDelegate = [UIApplication sharedApplication].delegate;
-    SWRevealViewController *drawerVC = [appDelegate valueForKey:@"drawer"];
+    
+    SWRevealViewController *drawerVC = [APP_DELEGATE valueForKey:@"drawer"];
     [drawerVC revealToggleAnimated:NO];
     UITabBarController *tabVC = (UITabBarController *)drawerVC.frontViewController;
     UINavigationController *currentNavi = tabVC.selectedViewController;

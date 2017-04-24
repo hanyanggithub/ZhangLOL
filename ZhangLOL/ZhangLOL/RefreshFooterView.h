@@ -9,12 +9,16 @@
 #import <UIKit/UIKit.h>
 
 typedef NS_ENUM(NSInteger,RefreshFooterViewStatus) {
-    RefreshFooterViewStatusWaitUserSlideDown,   // 等待用户下滑的状态
-    RefreshFooterViewStatusUserSlidingDown,     // 用户正在下滑的状态
+    RefreshFooterViewStatusWaitRefreshing,      // 等待刷新状态
     RefreshFooterViewStatusWaitUserLoosen,      // 等待用户松手的状态
     RefreshFooterViewStatusRefreshing           // 刷新状态
 };
 
 @interface RefreshFooterView : UIView
 
+- (instancetype)initWithScrollView:(UIScrollView *)scrollView;
+- (RefreshFooterViewStatus)currentStatus;
+- (void)refreshFooterViewStatusChangedBlock:(void(^)(RefreshFooterViewStatus status))block;
+- (void)startRefreshing;
+- (void)stopRefreshing;
 @end

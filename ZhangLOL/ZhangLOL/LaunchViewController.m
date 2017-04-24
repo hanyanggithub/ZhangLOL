@@ -8,6 +8,7 @@
 
 #import "LaunchViewController.h"
 
+NSString * const userInfoTableName = @"userInfoTableName";
 
 @interface LaunchViewController ()<TencentSessionDelegate>
 @property(nonatomic, strong)UIImageView *launchImageView;
@@ -63,6 +64,14 @@
         self.oAuth.accessToken = token;
         self.oAuth.openId = [USER_DEFAULTS stringForKey:QQ_OPENID_KEY];
         self.oAuth.expirationDate = [USER_DEFAULTS objectForKey:QQ_TOKEN_EXDATE_KEY];
+        NSDictionary *userInfo = [USER_DEFAULTS objectForKey:QQ_USERINFO_KEY];;
+        if (userInfo) {
+            if ([self.delegate respondsToSelector:@selector(launchViewControllerJudgeLoginStateSucceed:userInfo:)]) {
+                [self.delegate launchViewControllerJudgeLoginStateSucceed:self userInfo:userInfo];
+            }
+        }else{
+            [SVProgressHUD show];
+        }
         // 获取用户信息
         [self.oAuth getUserInfo];
     }else{
@@ -82,12 +91,12 @@
 }
 #pragma mark - TencentSessionDelegate
 - (void)getUserInfoResponse:(APIResponse *)response {
-    // 获取用户信息的回调
-//    NSLog(@"%@",response.message);
-    //    NSLog(@"%@",response.jsonResponse);
     // 处理信息返回
-    [SVProgressHUD dismissWithDelay:0.5];
+    if ([SVProgressHUD isVisible]) {
+        [SVProgressHUD dismissWithDelay:0.5];
+    }
     if ([self.delegate respondsToSelector:@selector(launchViewControllerJudgeLoginStateSucceed:userInfo:)]) {
+        [USER_DEFAULTS setObject:response.jsonResponse forKey:QQ_USERINFO_KEY];
         [self.delegate launchViewControllerJudgeLoginStateSucceed:self userInfo:response.jsonResponse];
     }
 }

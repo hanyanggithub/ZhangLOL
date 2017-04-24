@@ -10,7 +10,7 @@
 
 @implementation UIView (Extension)
 
-@dynamic width,height,top,bottom,left,right;// 让编译器通过编译，运行时完成属性的set get
+@dynamic width,height,top,bottom,left,right;
 
 - (UIViewController *)viewController {
     UIResponder *next = self;

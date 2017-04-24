@@ -17,5 +17,6 @@
 + (UIImage *)reSizeImage:(UIImage *)image toSize:(CGSize)reSize;
 // 裁切图片
 + (UIImage *)clipImageWithImage:(UIImage*)image inRect:(CGRect)rect;
-
+// 下载开机图片
++ (void)downloadLaunchImageIsForce:(BOOL)force;
 @end

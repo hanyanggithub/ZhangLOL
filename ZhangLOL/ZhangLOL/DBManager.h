@@ -10,6 +10,8 @@
 
 typedef void(^completeBlock)(BOOL result,NSArray *resultData);
 
+extern NSString * const dbName;
+
 @interface DBManager : NSObject
 
 + (void)createTableWithName:(NSString *)tableName

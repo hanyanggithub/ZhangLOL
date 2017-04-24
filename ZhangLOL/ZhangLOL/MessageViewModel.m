@@ -31,6 +31,8 @@ NSString * const rencommendTableName = @"rencommendTableName";
     self = [super init];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(saveData) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        self.shouldShowNewMessageView = NO;
+        self.newMessageCount = 0;
     }
     return self;
 }
@@ -52,7 +54,13 @@ NSString * const rencommendTableName = @"rencommendTableName";
     }
     return dic;
 }
-- (void)readDataFromDB {
+- (BOOL)readDataFromDB {
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *filePath = [NSHomeDirectory() stringByAppendingFormat:@"/Documents/%@",dbName];
+    if (![fileManager fileExistsAtPath:filePath]) {
+        return NO;
+    }
     if ([DBManager isExistsTableWithName:channelTableName]) {
         [DBManager selectDataInTableWithName:channelTableName completeBlock:^(BOOL result, NSArray *resultData) {
             if (result && resultData.count > 0) {
@@ -114,6 +122,7 @@ NSString * const rencommendTableName = @"rencommendTableName";
             }];
         }
     }
+    return YES;
 }
 // 程序将要退出本地缓存部分数据
 - (void)saveData {
@@ -377,52 +386,19 @@ NSString * const rencommendTableName = @"rencommendTableName";
 
 
 - (BOOL)mergeModelDataArrayWithChannelModel:(ChannelModel *)model newModels:(NSMutableArray *)array page:(int)page {
-    // 获取原数据
-    BOOL result = NO;
-    NSString *info = [self.fromDataBaseInfo objectForKey:model.channel_id];
-    if ([info isEqualToString:@"1"]) {
-        [self.allChannelsModelDic removeObjectForKey:model.channel_id];
-        [self.fromDataBaseInfo setObject:@"0" forKey:model.channel_id];
-    }
-    NSMutableArray *originData = [self.allChannelsModelDic objectForKey:model.channel_id];
     
+    BOOL result = NO;
+    
+    // 获取原始数据
+    NSMutableArray *originData = [self.allChannelsModelDic objectForKey:model.channel_id];
     if (originData) {
+        // 判断是否从本地数据库中获取到的原始数据
+        NSString *info = [self.fromDataBaseInfo objectForKey:model.channel_id];
         
-        if (page != 0) {
-            if ([model.chnl_type isEqualToString:@"col"]) {
-                for (NSMutableArray *subArray in array) {
-                    NSInteger index = [array indexOfObject:subArray];
-                    ;
-                    NSMutableArray *originSubData = originData[index];
-                    [originSubData addObjectsFromArray:subArray];
-                }
-            }else{
-                // 1.替换本地点击过的cellModel
-                NSMutableArray *disposedArray = [self disposeModels:array];
-                // 2.拼接
-                [originData addObjectsFromArray:disposedArray];
-            }
-        }else{
-            // 刷新或者是首次请求
-            if ([model.chnl_type isEqualToString:@"col"]) {
-                for (NSMutableArray *subArray in array) {
-                    NSInteger index = [array indexOfObject:subArray];
-                    ;
-                    NSMutableArray *originSubData = originData[index];
-                    
-                    // 获取原数据中时间结点最后的一条
-                    SpecialModel *orgNewetModel = [originSubData firstObject];
-                    for (NSInteger i = subArray.count -1; i < subArray.count; i--) {
-                        SpecialModel *everyNewModel = subArray[i];
-                        // 比较顺序
-                        int oldT = [self getTimeIntervalSinceNow:orgNewetModel.last_update];
-                        int newT = [self getTimeIntervalSinceNow:everyNewModel.last_update];
-                        if (newT < oldT) {
-                            [originSubData insertObject:everyNewModel atIndex:0];
-                        }
-                    }
-                }
-            }else{
+        if ([info isEqualToString:@"1"]) {
+            [self.fromDataBaseInfo setObject:@"0" forKey:model.channel_id];
+            // 如果是最新频道计算有几条新的消息
+            if ([model.channel_id isEqualToString:@"12"]) {
                 SmallCellModel *orgNewetModel = [originData firstObject];
                 for (NSInteger i = array.count -1; i < array.count; i--) {
                     SmallCellModel *everyNewModel = array[i];
@@ -430,19 +406,80 @@ NSString * const rencommendTableName = @"rencommendTableName";
                     int oldT = [self getTimeIntervalSinceNow:orgNewetModel.publication_date];
                     int newT = [self getTimeIntervalSinceNow:everyNewModel.publication_date];
                     if (newT < oldT) {
-                        [originData insertObject:everyNewModel atIndex:0];
+                        self.shouldShowNewMessageView = YES;
+                        self.newMessageCount++;
                     }
                 }
-                // 1.替换本地点击过的cellModel
-                originData = [self disposeModels:originData];
-                
             }
             
+        }else{
+            result = YES;
+            if (page != 0) {
+                // 加载更多数据
+                if ([model.chnl_type isEqualToString:@"col"]) {
+                    for (NSMutableArray *subArray in array) {
+                        NSInteger index = [array indexOfObject:subArray];
+                        ;
+                        NSMutableArray *originSubData = originData[index];
+                        [originSubData addObjectsFromArray:subArray];
+                    }
+                }else{
+                    // 1.替换本地点击过的cellModel
+                    NSMutableArray *disposedArray = [self disposeModels:array];
+                    // 2.拼接
+                    [originData addObjectsFromArray:disposedArray];
+                }
+                
+            }else{
+                // 刷新或者是首次请求
+                if ([model.chnl_type isEqualToString:@"col"]) {
+                    for (NSMutableArray *subArray in array) {
+                        NSInteger index = [array indexOfObject:subArray];
+                        ;
+                        NSMutableArray *originSubData = originData[index];
+                        
+                        // 获取原数据中时间结点最后的一条
+                        SpecialModel *orgNewetModel = [originSubData firstObject];
+                        for (NSInteger i = subArray.count -1; i < subArray.count; i--) {
+                            SpecialModel *everyNewModel = subArray[i];
+                            // 比较顺序
+                            int oldT = [self getTimeIntervalSinceNow:orgNewetModel.last_update];
+                            int newT = [self getTimeIntervalSinceNow:everyNewModel.last_update];
+                            if (newT < oldT) {
+                                [originSubData insertObject:everyNewModel atIndex:0];
+                            }
+                        }
+                    }
+                }else{
+                    // 插入最新数据
+                    SmallCellModel *orgNewetModel = [originData firstObject];
+                    for (NSInteger i = array.count -1; i < array.count; i--) {
+                        SmallCellModel *everyNewModel = array[i];
+                        // 比较顺序
+                        int oldT = [self getTimeIntervalSinceNow:orgNewetModel.publication_date];
+                        int newT = [self getTimeIntervalSinceNow:everyNewModel.publication_date];
+                        if (newT < oldT) {
+                            if ([model.name isEqualToString:@"最新"]) {
+                                self.shouldShowNewMessageView = YES;
+                                self.newMessageCount++;
+                            }
+                            [originData insertObject:everyNewModel atIndex:0];
+                        }
+                    }
+                    // 1.替换本地点击过的cellModel
+                    originData = [self disposeModels:originData];
+                    
+                }
+                
+            }
+
+            
         }
-        result = YES;
+        
     }
     return result;
 }
+
 
 /**
  对新请求的数据模型去重(消息的阅读状态)

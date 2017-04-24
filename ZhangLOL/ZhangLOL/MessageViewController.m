@@ -15,6 +15,7 @@
 #import "ChannelModel.h"
 #import "CacheManager.h"
 #import "SearchViewController.h"
+#import "NewMessageTipView.h"
 
 
 @interface MessageViewController ()<UITableViewDelegate,UITableViewDataSource,MessageScrollViewDataSource,UINavigationControllerDelegate,UITabBarControllerDelegate>
@@ -57,14 +58,16 @@
     [self layoutNavigationBar];
     // 设置缓存数
     [CacheManager defaultSettingSDImageCache];
-    
+    // 读取本地数据
+    BOOL result = [self.viewModel readDataFromDB];
+    if (result) {
+        [self showView];
+    }
     if ([ZhangLOLNetwork netUsable]) {
         [self requestChannelData];
         [self requestRecommendData];
     }else{
-        // 读取本地数据
-        [self.viewModel readDataFromDB];
-        [self showView];
+        
     }
     [self monitoring];
 }
@@ -117,7 +120,7 @@
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     
-    self.refreshHeader = [[RefreshHeaderView alloc] initWithScrollView:self.tableView location:RefreshHeaderViewLocationBottomEqualToScrollViewTop];
+    self.refreshHeader = [[RefreshHeaderView alloc] initWithScrollView:self.tableView location:RefreshHeaderViewLocationTopEqualToScrollViewTop];
     __weak typeof(self) weakSelf = self;
     [self.refreshHeader refreshHeaderViewStatusChangedBlock:^(RefreshHeaderViewStatus status) {
         if (status == RefreshHeaderViewStatusRefreshing){
@@ -259,7 +262,11 @@
     __weak typeof(self) weakSelf = self;
     ChannelModel *model = self.viewModel.channelModels[0];
     [self.viewModel requestDataWithChannelModel:model page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
-        
+        if (weakSelf.viewModel.shouldShowNewMessageView) {
+            [NewMessageTipView showMessage:[NSString stringWithFormat:@"有%d条最新资讯",weakSelf.viewModel.newMessageCount]];
+            weakSelf.viewModel.shouldShowNewMessageView = NO;
+            weakSelf.viewModel.newMessageCount = 0;
+        }
         [weakSelf.messageScrollView updateTableViewsWithModels:models index:weakSelf.messageScrollView.currentIndex info:nil];
         [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
         
@@ -325,7 +332,12 @@
     // 刷新资讯页当前显示的频道数据
     __weak typeof(self) weakSelf = self;
     [self.viewModel requestDataWithChannelModel:self.viewModel.channelModels[self.messageScrollView.currentIndex] page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
-        [weakSelf.messageScrollView updateTableViewsWithModels:models index:self.messageScrollView.currentIndex info:nil];
+        if (weakSelf.viewModel.shouldShowNewMessageView) {
+            [NewMessageTipView showMessage:[NSString stringWithFormat:@"有%d条最新资讯",weakSelf.viewModel.newMessageCount]];
+            weakSelf.viewModel.shouldShowNewMessageView = NO;
+            weakSelf.viewModel.newMessageCount = 0;
+        }
+        [weakSelf.messageScrollView updateTableViewsWithModels:models index:weakSelf.messageScrollView.currentIndex info:nil];
         [weakSelf.refreshHeader stopRefreshing];
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {

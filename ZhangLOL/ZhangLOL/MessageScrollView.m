@@ -16,6 +16,7 @@
 #import "HoverView.h"
 #import "MessageViewModel.h"
 #import "SmallCellModel.h"
+#import "RefreshFooterView.h"
 
 @interface MessageScrollView ()<UITableViewDelegate,ChannelViewDelegate> {
     NSMutableArray * _reusableTables;
@@ -185,24 +186,6 @@
     }
 }
 
-#pragma mark - 滑动视图滑动时禁止子视图的表视图滑动逻辑
-- (void)subTableInteraction{
-    if (self.panGestureRecognizer.state == UIGestureRecognizerStateChanged) {
-        for (UITableView *tableView in self.tableViews) {
-            if (tableView.scrollEnabled) {
-                tableView.scrollEnabled = NO;
-            }
-        }
-    }
-    if (self.panGestureRecognizer.state == UIGestureRecognizerStatePossible) {
-        for (UITableView *tableView in self.tableViews) {
-            if (!tableView.scrollEnabled) {
-                tableView.scrollEnabled = YES;
-            }
-        }
-    }
-}
-
 #pragma mark - 根据当前点判断当前滑动视图的滑动方向
 - (UIScrollViewScrollDirection)scrollDirectionWithCurrentPoint:(CGPoint)point {
     // 1.判断滑动的方向
@@ -331,11 +314,8 @@
         [self loadMoreInteractionWithScrollView:scrollView];
         
     }else{
-        // 处理当scrollView滑动时子视图的滑动是否可用
-        [self subTableInteraction];
         // 处理当scrollView即将滑动到新的子视图位置即将显示的位置判断
         [self subTableShowJudge];
-        
     }
 }
 

@@ -57,5 +57,13 @@
     }
 }
 
-
+- (void)revealController:(SWRevealViewController *)revealController didMoveToPosition:(FrontViewPosition)position {
+    if (position == FrontViewPositionLeft) {
+        revealController.toggleAnimationType = SWRevealToggleAnimationTypeSpring;
+    }
+    if (position == FrontViewPositionRight) {
+        revealController.toggleAnimationType = SWRevealToggleAnimationTypeEaseOut;
+    }
+    
+}
 @end

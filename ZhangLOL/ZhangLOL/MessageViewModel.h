@@ -13,7 +13,8 @@
 
 @interface MessageViewModel : NSObject
 
-@property(nonatomic, assign)BOOL readFromDB;                                // 标识启动数据是否从数据库中读取
+@property(nonatomic, assign)BOOL shouldShowNewMessageView;                   // 判断是有有新数据
+@property(nonatomic, assign)int newMessageCount;                            // 新资讯个数
 @property(nonatomic, strong)NSMutableArray *channelModels;                  // 频道模型
 @property(nonatomic, strong)NSMutableArray *rencommendModels;               // 轮播模型
 @property(nonatomic, strong)NSMutableDictionary *allChannelsModelDic;       // 所有频道单元格模型
@@ -51,6 +52,8 @@
 - (void)saveModelTag:(SmallCellModel *)model;
 
 // 读取本地数据
-- (void)readDataFromDB;
+- (BOOL)readDataFromDB;
+
+
 
 @end

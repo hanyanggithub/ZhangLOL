@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 
+
 typedef NS_ENUM(NSInteger,RefreshHeaderViewStatus) {
     RefreshHeaderViewStatusWaitUserSlideDown,   // 等待用户下滑的状态
     RefreshHeaderViewStatusUserSlidingDown,     // 用户正在下滑的状态
@@ -19,7 +20,7 @@ typedef NS_ENUM(NSInteger,RefreshHeaderViewStatus) {
 
 typedef NS_ENUM(NSInteger,RefreshHeaderViewLocation) {
     RefreshHeaderViewLocationBottomEqualToScrollViewTop, // 底部和ScrollView顶部平行
-    RefreshHeaderViewLocationTopEqualToScrollViewTop    // 顶部和ScrollView顶部平行
+    RefreshHeaderViewLocationTopEqualToScrollViewTop     // 顶部和ScrollView顶部平行
     
 };
 

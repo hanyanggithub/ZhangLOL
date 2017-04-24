@@ -13,10 +13,12 @@
 #import "ImageBrowserController.h"
 #import "MessgeDetailController.h"
 #import "RefreshHeaderView.h"
+#import "RefreshFooterView.h"
 
 @interface SearchViewController ()<UITableViewDelegate,UITextFieldDelegate>
 @property(nonatomic, strong)NewestTableView *contentView;
 @property(nonatomic, strong)RefreshHeaderView *refreshHeaderView;
+@property(nonatomic, strong)RefreshFooterView *refreshFooterView;
 @property(nonatomic, strong)UITableView *historyView;
 @property(nonatomic, strong)UIButton *historyCleanButton;
 @property(nonatomic, strong)UIView *contianerView;
@@ -24,6 +26,9 @@
 @property(nonatomic, strong)UITextField *inputView;
 @property(nonatomic, strong)UIButton *cancelButton;
 @property(nonatomic, strong)NSMutableArray *models;
+@property(nonatomic, assign)int totalNum;
+@property(nonatomic, assign)int page;
+@property(nonatomic, copy)NSString *currentKeyword;
 @property(nonatomic, assign)BOOL isFirstEnter;
 @end
 
@@ -118,18 +123,22 @@
     
 }
 - (void)createSubviews {
-    self.contentView = [[NewestTableView alloc] initWithFrame:CGRectMake(0, 64, self.view.width, self.view.height - 64) style:UITableViewStylePlain];
-    self.contentView.backgroundColor = [UIColor whiteColor];
+    self.contentView = [[NewestTableView alloc] initWithFrame:CGRectMake(0, NAVI_STATUS_BAR_HEIGHT, self.view.width, self.view.height - NAVI_STATUS_BAR_HEIGHT) style:UITableViewStylePlain];
     self.contentView.delegate = self;
     [self.view addSubview:self.contentView];
     
-    self.refreshHeaderView = [[RefreshHeaderView alloc] initWithScrollView:self.contentView location:RefreshHeaderViewLocationTopEqualToScrollViewTop];
-    self.refreshHeaderView.hidden = YES;
-    
+    self.refreshHeaderView = [[RefreshHeaderView alloc] initWithScrollView:self.contentView location:RefreshHeaderViewLocationBottomEqualToScrollViewTop];
     __weak typeof(self) weakSelf = self;
     [self.refreshHeaderView refreshHeaderViewStatusChangedBlock:^(RefreshHeaderViewStatus status) {
         if (status == RefreshHeaderViewStatusRefreshing) {
             [weakSelf searchAction];
+        }
+    }];
+    
+    self.refreshFooterView = [[RefreshFooterView alloc] initWithScrollView:self.contentView];
+    [self.refreshFooterView refreshFooterViewStatusChangedBlock:^(RefreshFooterViewStatus status) {
+        if (status == RefreshFooterViewStatusRefreshing) {
+            [weakSelf loadMore];
         }
     }];
     
@@ -158,34 +167,57 @@
     }
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if ([tableView isMemberOfClass:[NewestTableView class]]) {
-        NewestTableView *newestTable = (NewestTableView *)tableView;
-        SmallCellModel *model = newestTable.models[indexPath.row];
-        if ([model.newstype isEqualToString:@"图集"]) {
-            return ATLAS_CELL_HEIGHT;
-        }
-        
+    NewestTableView *newestTable = (NewestTableView *)tableView;
+    SmallCellModel *model = newestTable.models[indexPath.row];
+    if ([model.newstype isEqualToString:@"图集"]) {
+        return ATLAS_CELL_HEIGHT;
     }
-    
-    return 100;
+    return ORDINARY_CELL_HEIGHT;
 }
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     [self searchAction];
     [textField endEditing:YES];
     return YES;
 }
+
+- (void)loadMore {
+    if (self.totalNum > self.models.count) {
+        NSMutableDictionary *searchParameters = [NSMutableDictionary dictionary];
+        [searchParameters setObject:@(self.page + 1) forKey:@"page"];
+        [searchParameters setObject:@"10" forKey:@"num"];
+        [searchParameters setObject:@"ios" forKey:@"plat"];
+        [searchParameters setObject:@"3" forKey:@"version"];
+        [searchParameters setObject:self.currentKeyword forKey:@"keyword"];
+        [ZhangLOLNetwork GET:SEARCH_PATH parameters:searchParameters progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+            self.totalNum = [responseObject[@"total_num"] intValue];
+            self.page = [responseObject[@"page"] intValue];
+            NSArray *array = responseObject[@"list"];
+            for (NSDictionary *dic in array) {
+                SmallCellModel *model = [[SmallCellModel alloc] initWithDic:dic];
+                [self.models addObject:model];
+            }
+            self.contentView.models = self.models;
+            [self.contentView reloadData];
+            [self.refreshFooterView stopRefreshing];
+        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+            [self.refreshFooterView stopRefreshing];
+        }];
+    }
+}
 - (void)searchAction {
-    NSMutableDictionary *searchParm = [NSMutableDictionary dictionary];
-    [searchParm setObject:@"0" forKey:@"page"];
-    [searchParm setObject:@"10" forKey:@"num"];
-    [searchParm setObject:@"ios" forKey:@"plat"];
-    [searchParm setObject:@"3" forKey:@"version"];
-    
-    if (self.inputView.text.length > 0) {
-        NSString *keyWord = [self.inputView.text stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@" "]];
-        if (keyWord.length > 0) {
-            [searchParm setObject:keyWord forKey:@"keyword"];
-            [ZhangLOLNetwork GET:SEARCH_PATH parameters:searchParm progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+    NSMutableDictionary *searchParameters = [NSMutableDictionary dictionary];
+    [searchParameters setObject:@"0" forKey:@"page"];
+    [searchParameters setObject:@"10" forKey:@"num"];
+    [searchParameters setObject:@"ios" forKey:@"plat"];
+    [searchParameters setObject:@"3" forKey:@"version"];
+    NSString *keyWord = [self.inputView.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    if (keyWord.length > 0) {
+        [searchParameters setObject:keyWord forKey:@"keyword"];
+        self.currentKeyword = keyWord;
+        [ZhangLOLNetwork GET:SEARCH_PATH parameters:searchParameters progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+            if (responseObject) {
+                self.totalNum = [responseObject[@"total_num"] intValue];
+                self.page = [responseObject[@"page"] intValue];
                 NSArray *array = responseObject[@"list"];
                 NSMutableArray *arrays = [NSMutableArray array];
                 for (NSDictionary *dic in array) {
@@ -193,21 +225,20 @@
                     [arrays addObject:model];
                 }
                 self.models = arrays;
-                self.contentView.models = arrays;
+                self.contentView.models = self.models;
                 
                 if (self.models.count > 0) {
                     [self removeErrorView];
                     [self.contentView reloadData];
-                    self.refreshHeaderView.hidden = NO;
+                    
                 }else{
                     [self showErrorViewWithMessage:@"没有找到搜索对象"];
-                    self.refreshHeaderView.hidden = YES;
                 }
-                [self.refreshHeaderView stopRefreshing];
-            } failure:^(NSURLSessionDataTask *task, NSError *error) {
-                [self.refreshHeaderView stopRefreshing];
-            }];
-        }
+            }
+            [self.refreshHeaderView stopRefreshing];
+        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+            [self.refreshHeaderView stopRefreshing];
+        }];
     }
 }
 

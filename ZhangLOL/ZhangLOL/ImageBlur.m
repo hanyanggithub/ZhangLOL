@@ -78,8 +78,7 @@
     vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
     vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
     vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
-    vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
-    vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
+//    vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, boxSize, boxSize, 0, kvImageEdgeExtend);
     
     effectImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
@@ -112,5 +111,57 @@
     
 }
 
++ (void)downloadLaunchImageIsForce:(BOOL)force {
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *launchImagePath = [NSString stringWithFormat:@"%@/Documents/launch.png",NSHomeDirectory()];
+    BOOL launchImageExist = [fileManager fileExistsAtPath:launchImagePath];
+    if (launchImageExist) {
+        if (force) {
+            [self requestLaunchImage];
+        }
+    }else{
+        [self requestLaunchImage];
+    }
+    
+    
+    NSString *loginImagePath = [NSString stringWithFormat:@"%@/Documents/login.png",NSHomeDirectory()];
+    BOOL loginImageExist = [fileManager fileExistsAtPath:loginImagePath];
+    if (loginImageExist) {
+        if (force) {
+            [self requestLoginImage];
+        }
+    }else{
+        [self requestLoginImage];
+    }
+}
 
++ (void)requestLaunchImage {
+    // 请求开机图
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:LAUNCH_IMAGE_URL]];
+    [ZhangLOLNetwork downloadTaskWithRequest:request progress:^(NSProgress *downloadProgress){
+    } destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+        NSString *path = [NSString stringWithFormat:@"file://%@/Documents/launch.png",NSHomeDirectory()];
+        NSURL *url = [NSURL URLWithString:path];
+        return url;
+    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+        if (error) {
+            NSLog(@"%@",error);
+        }
+    }];
+}
++ (void)requestLoginImage {
+    // 请求登录bg
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:LOGIN_IMAGE_URL]];
+    [ZhangLOLNetwork downloadTaskWithRequest:request progress:^(NSProgress *downloadProgress){
+    } destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
+        NSString *path = [NSString stringWithFormat:@"file://%@/Documents/login.png",NSHomeDirectory()];
+        NSURL *url = [NSURL URLWithString:path];
+        return url;
+    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
+        if (error) {
+            NSLog(@"%@",error);
+        }
+    }];
+}
 @end

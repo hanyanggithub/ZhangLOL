@@ -23,47 +23,21 @@ NSString * const loginSuccessNotificationName = @"LoginSuccessNotificationName";
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // 开启网络状态监控
     [ZhangLOLNetwork startMonitoring];
     // 下载开机图和启动图
-    [self downloadLaunchImage];
+    [ImageBlur downloadLaunchImageIsForce:NO];
     return YES;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    //设置状态栏字体颜色
-    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     _window.backgroundColor = [UIColor whiteColor];
     [self installLaunchModules];
     [_window makeKeyAndVisible];
     return YES;
 }
-- (void)downloadLaunchImage {
-    // 请求开机图
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:LAUNCH_IMAGE_URL]];
-    [ZhangLOLNetwork downloadTaskWithRequest:request progress:^(NSProgress *downloadProgress){
-    } destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
-        NSString *path = [NSString stringWithFormat:@"file://%@/Documents/launch.png",NSHomeDirectory()];
-        NSURL *url = [NSURL URLWithString:path];
-        return url;
-    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
-        if (error) {
-            NSLog(@"%@",error);
-        }
-    }];
-    // 请求登录bg
-    request = [NSURLRequest requestWithURL:[NSURL URLWithString:LOGIN_IMAGE_URL]];
-    [ZhangLOLNetwork downloadTaskWithRequest:request progress:^(NSProgress *downloadProgress){
-    } destination:^NSURL *(NSURL *targetPath, NSURLResponse *response) {
-        NSString *path = [NSString stringWithFormat:@"file://%@/Documents/login.png",NSHomeDirectory()];
-        NSURL *url = [NSURL URLWithString:path];
-        return url;
-    } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
-        if (error) {
-            NSLog(@"%@",error);
-        }
-    }];
-}
+
 - (void)installLaunchModules {
     if (self.launchNavi == nil) {
         LaunchViewController *launchViewController = [[LaunchViewController alloc] init];
@@ -84,12 +58,9 @@ NSString * const loginSuccessNotificationName = @"LoginSuccessNotificationName";
         self.drawer.bounceBackOnOverdraw = NO;
         self.drawer.bounceBackOnLeftOverdraw = NO;
         self.drawer.rearViewRevealOverdraw = 0;
-        self.drawer.toggleAnimationType = SWRevealToggleAnimationTypeSpring;
+        self.drawer.springDampingRatio = 0.8;
         self.drawer.delegate = (id<SWRevealViewControllerDelegate>)tabBarContr;
-    }else{
-        
     }
-    
     if (self.drawer.frontViewPosition == FrontViewPositionRight) {
         [self.drawer revealToggleAnimated:NO];
     }

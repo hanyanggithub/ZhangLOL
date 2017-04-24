@@ -46,6 +46,7 @@
 		04414A161E95453B0079D027 /* BaseTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 04414A151E95453B0079D027 /* BaseTableView.m */; };
 		04BCE6081E9A0B3F00182753 /* MessageViewModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 04BCE6071E9A0B3F00182753 /* MessageViewModel.m */; };
 		04BCE60B1E9A3F9A00182753 /* ImageBlur.m in Sources */ = {isa = PBXBuildFile; fileRef = 04BCE60A1E9A3F9A00182753 /* ImageBlur.m */; };
+		04C0E08C1EAD40D6000CDA2D /* NewMessageTipView.m in Sources */ = {isa = PBXBuildFile; fileRef = 04C0E08B1EAD40D6000CDA2D /* NewMessageTipView.m */; };
 		04EC0BB71EAA9B0000803E0F /* SettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EC0BB61EAA9B0000803E0F /* SettingViewController.m */; };
 		04EC0BBE1EAABDAE00803E0F /* SettingTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EC0BBD1EAABDAE00803E0F /* SettingTableViewCell.m */; };
 		04EC0BC11EAAF04100803E0F /* DBManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EC0BC01EAAF04100803E0F /* DBManager.m */; };
@@ -155,6 +156,8 @@
 		04BCE6071E9A0B3F00182753 /* MessageViewModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MessageViewModel.m; sourceTree = "<group>"; };
 		04BCE6091E9A3F9A00182753 /* ImageBlur.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageBlur.h; sourceTree = "<group>"; };
 		04BCE60A1E9A3F9A00182753 /* ImageBlur.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageBlur.m; sourceTree = "<group>"; };
+		04C0E08A1EAD40D6000CDA2D /* NewMessageTipView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewMessageTipView.h; sourceTree = "<group>"; };
+		04C0E08B1EAD40D6000CDA2D /* NewMessageTipView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewMessageTipView.m; sourceTree = "<group>"; };
 		04EC0BB51EAA9B0000803E0F /* SettingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingViewController.h; sourceTree = "<group>"; };
 		04EC0BB61EAA9B0000803E0F /* SettingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingViewController.m; sourceTree = "<group>"; };
 		04EC0BBC1EAABDAE00803E0F /* SettingTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingTableViewCell.h; sourceTree = "<group>"; };
@@ -520,6 +523,8 @@
 				040CF9E81E9286C300B003D5 /* HoverView.m */,
 				04414A0E1E94EE690079D027 /* MessageScrollView.h */,
 				04414A0F1E94EE690079D027 /* MessageScrollView.m */,
+				04C0E08A1EAD40D6000CDA2D /* NewMessageTipView.h */,
+				04C0E08B1EAD40D6000CDA2D /* NewMessageTipView.m */,
 			);
 			name = surface;
 			sourceTree = "<group>";
@@ -741,6 +746,7 @@
 				04EDE04C1E96944C00A07768 /* UIScrollView+Extension.m in Sources */,
 				04EDE0461E96692800A07768 /* MessgeDetailController.m in Sources */,
 				041AF24F1EA424E400C1BAB7 /* UIColor+Extension.m in Sources */,
+				04C0E08C1EAD40D6000CDA2D /* NewMessageTipView.m in Sources */,
 				04F0C8941EA53C4A00843B64 /* AtlasCell.m in Sources */,
 				04414A0C1E94E9210079D027 /* NewestTableView.m in Sources */,
 				04BCE6081E9A0B3F00182753 /* MessageViewModel.m in Sources */,

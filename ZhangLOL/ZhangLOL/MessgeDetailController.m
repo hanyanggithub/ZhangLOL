@@ -89,11 +89,11 @@
     [self.webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
     [self.view addSubview:self.webView];
     
-    self.progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, 64, self.view.width, 0)];
+    self.progressView = [[UIProgressView alloc] initWithFrame:CGRectMake(0, 62, self.view.width, 0)];
     self.progressView.progressTintColor = [UIColor greenColor];
     self.progressView.trackTintColor = [UIColor whiteColor];
     self.progressView.hidden = YES;
-    [self.view addSubview:self.progressView];
+    [self.customNaviBar addSubview:self.progressView];
     
     
     NSString *urlStr = nil;
