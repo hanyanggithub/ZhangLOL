@@ -21,8 +21,9 @@
     return _imageViews;
 }
 
-- (void)setPages:(NSInteger)pages {
+- (void)setPages:(NSUInteger)pages {
     if (_pages != pages) {
+        _pages = pages;
         [self removeSubviews];
         for (int i = 0; i < pages; i++) {
             UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(PAGR_CONTROLL_HEIGHT *i, 0, PAGR_CONTROLL_HEIGHT, PAGR_CONTROLL_HEIGHT)];
@@ -34,17 +35,22 @@
         }
     }
 }
-
-- (void)setIndex:(NSInteger)index {
-    
-    if (index >= 0 && index < self.imageViews.count) {
+- (void)setCurrentIndex:(NSUInteger)currentIndex {
+    if (currentIndex < self.imageViews.count) {
         for (UIImageView *imageView in self.imageViews) {
             imageView.highlighted = NO;
         }
-        UIImageView *imageView = self.imageViews[index];
+        UIImageView *imageView = self.imageViews[currentIndex];
         imageView.highlighted = YES;
-        self.currentPage = index;
     }
+}
+- (NSUInteger)currentIndex {
+    for (UIImageView *imageView in self.imageViews) {
+        if (imageView.isHighlighted) {
+            return [self.imageViews indexOfObject:imageView];
+        }
+    }
+    return 0;
 }
 
 

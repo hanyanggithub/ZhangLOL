@@ -42,6 +42,9 @@
 @property(nonatomic, copy)NSString *v_len;
 
 
+@property(nonatomic, copy)NSString *has_next; // 是否支持加载更多
+
+
 /**
  比赛特有
  */

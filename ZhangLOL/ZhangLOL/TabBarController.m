@@ -14,6 +14,8 @@
 
 @interface TabBarController ()<SWRevealViewControllerDelegate>
 
+@property(nonatomic, strong)UIView *shadeView;
+
 @end
 
 @implementation TabBarController
@@ -45,6 +47,16 @@
     [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor blackColor]} forState:UIControlStateNormal];
     [[UITabBarItem appearance] setTitleTextAttributes:@{NSForegroundColorAttributeName:MAIN_COLOR} forState:UIControlStateSelected];
     self.tabBar.translucent = NO;
+    
+    self.shadeView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, self.tabBar.height)];
+    self.shadeView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.5];
+    self.shadeView.hidden = YES;
+    self.shadeView.userInteractionEnabled = NO;
+    
+}
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self.tabBar addSubview:self.shadeView];
 }
 
 #pragma mark - SWRevealViewControllerDelegate

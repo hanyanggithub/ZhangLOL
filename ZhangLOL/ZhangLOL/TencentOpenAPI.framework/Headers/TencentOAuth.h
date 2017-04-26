@@ -430,7 +430,7 @@ typedef enum
  */
 @protocol TencentLoginDelegate <NSObject>
 
-@required
+@optional
 
 /**
  * 登录成功后的回调

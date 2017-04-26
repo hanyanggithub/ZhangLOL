@@ -18,7 +18,7 @@
 #import "NewMessageTipView.h"
 
 
-@interface MessageViewController ()<UITableViewDelegate,UITableViewDataSource,MessageScrollViewDataSource,UINavigationControllerDelegate,UITabBarControllerDelegate>
+@interface MessageViewController ()<UITableViewDelegate,UITableViewDataSource,MessageScrollViewDataSource>
 @property(nonatomic, strong)UIButton *searchButton;
 @property(nonatomic, strong)UITableView *tableView;
 @property(nonatomic, strong)MessageScrollView *messageScrollView;
@@ -26,16 +26,17 @@
 @property(nonatomic, strong)ChannelView *channelView;
 @property(nonatomic, strong)RecommendView *recommendView;
 @property(nonatomic, strong)RefreshHeaderView *refreshHeader;
-@property(nonatomic, assign)BOOL isVague;       // 标记导航栏的虚化状态
-@property(nonatomic, assign)CGPoint priorPoint;
-@property(nonatomic, assign)BOOL isStartScroll; // 标记大表视图是否是滑动状态
-@property(nonatomic, strong)NSMutableDictionary *everyChannelPages;
-@property(nonatomic, assign)BOOL isLoadingMore; // 表示是否是加载更多数据状态
+@property(nonatomic, assign)BOOL isVague;                                           // 标记导航栏的虚化状态
+@property(nonatomic, assign)CGPoint priorPoint;                                     // 用于判断滑动视图的滑动方向，前一个contentOffset
+@property(nonatomic, assign)BOOL isStartScroll;                                     // 标记大表视图是否是滑动状态
+@property(nonatomic, strong)NSMutableDictionary *everyChannelPages;                 // 每一频道对应的数据页数一页20个数据
+@property(nonatomic, assign)BOOL isLoadingMore;                                     // 表示当前是否为加载更多数据的状态
 
 @end
 
 @implementation MessageViewController
 
+#pragma mark - lazy loading
 
 - (MessageViewModel *)viewModel {
     if (_viewModel == nil) {
@@ -51,8 +52,12 @@
     return _everyChannelPages;
 }
 
+#pragma mark - life cycle
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.haveMenuButton = YES;
+    // 下载开机图和启动图
+    [ImageBlur downloadLaunchImageIsForce:YES];
     [self.revealViewController tapGestureRecognizer];
     [self createSubviews];
     [self layoutNavigationBar];
@@ -61,16 +66,20 @@
     // 读取本地数据
     BOOL result = [self.viewModel readDataFromDB];
     if (result) {
+        // 显示本地数据
         [self showView];
     }
+    // 网络可用请求数据
     if ([ZhangLOLNetwork netUsable]) {
         [self requestChannelData];
         [self requestRecommendData];
     }else{
         
     }
+    // 开启网络状态监控
     [self monitoring];
 }
+
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self.recommendView startAutoScrolling];
@@ -81,9 +90,8 @@
     [self.recommendView stopAutoScrolling];
 }
 
+#pragma mark - layout navigation bar
 - (void)layoutNavigationBar {
-    self.haveMenuButton = YES;
-    self.navigationController.delegate = self;
     [self.view insertSubview:self.customNaviBar aboveSubview:self.tableView];
     [self.customNaviBar setBackgroundImage:[UIImage imageNamed:@"navitransparentbg"] forBarMetrics:UIBarMetricsDefault];
     
@@ -96,12 +104,14 @@
     self.customNaviItem.rightBarButtonItem = rightItem;
 }
 
+#pragma mark - search button handle
 - (void)searchButtonClicked {
     SearchViewController *searchViewController = [[SearchViewController alloc] init];
     searchViewController.viewModel = self.viewModel;
     [self.navigationController pushViewController:searchViewController animated:YES];
 }
 
+#pragma mark -
 - (void)createSubviews {
     self.tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, self.view.width, SCREEN_HEIGHT - TABBAR_HEIGHT) style:UITableViewStylePlain];
     self.tableView.showsVerticalScrollIndicator = NO;
@@ -186,13 +196,6 @@
     }
 }
 
-- (void)settingAutoScrollingWithContentOffsetY:(CGFloat)contentOffsetY {
-    if (contentOffsetY < 0) {
-        [self.recommendView stopAutoScrolling];
-    }else{
-        [self.recommendView startAutoScrolling];
-    }
-}
 
 - (void)scrollInteractionWithScrollView:(UIScrollView *)scrollView {
     // 1.判断滑动的方向
@@ -257,38 +260,7 @@
     }];
 }
 
-- (void)requestNewestData {
-    // 加载资讯页最新频道数据
-    __weak typeof(self) weakSelf = self;
-    ChannelModel *model = self.viewModel.channelModels[0];
-    [self.viewModel requestDataWithChannelModel:model page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
-        if (weakSelf.viewModel.shouldShowNewMessageView) {
-            [NewMessageTipView showMessage:[NSString stringWithFormat:@"有%d条最新资讯",weakSelf.viewModel.newMessageCount]];
-            weakSelf.viewModel.shouldShowNewMessageView = NO;
-            weakSelf.viewModel.newMessageCount = 0;
-        }
-        [weakSelf.messageScrollView updateTableViewsWithModels:models index:weakSelf.messageScrollView.currentIndex info:nil];
-        [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
-        
-    } failure:^(NSURLSessionDataTask *task, NSError *error) {
-        NSLog(@"%@",error);
-    }];
-}
-
-- (void)requestOtherChannelData {
-    
-    __weak typeof(self) weakSelf = self;
-    for (int i = 1; i < self.viewModel.channelModels.count; i++) {
-        ChannelModel *model = self.viewModel.channelModels[i];
-        [self.viewModel requestDataWithChannelModel:model page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
-            // 设置初始数据页数
-            [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
-        } failure:^(NSURLSessionDataTask *task, NSError *error) {
-            NSLog(@"%@",error);
-        }];
-    }
-}
-
+#pragma mark - request data
 - (void)requestChannelData {
     // 频道
     __weak typeof(self) weakSelf = self;
@@ -309,8 +281,9 @@
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         NSLog(@"%@",error);
+        // TODO handle error
     }];
-
+    
 }
 
 - (void)requestRecommendData {
@@ -323,10 +296,45 @@
         [weakSelf.refreshHeader stopRefreshing];
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         NSLog(@"%@",error);
+        // TODO handle error
         [weakSelf.refreshHeader stopRefreshing];
     }];
-
+    
 }
+- (void)requestNewestData {
+    // 加载资讯页最新频道数据
+    __weak typeof(self) weakSelf = self;
+    ChannelModel *model = self.viewModel.channelModels[0];
+    [self.viewModel requestDataWithChannelModel:model page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
+        if (weakSelf.viewModel.shouldShowNewMessageView) {
+            [NewMessageTipView showMessage:[NSString stringWithFormat:@"有%d条最新资讯",weakSelf.viewModel.newMessageCount]];
+            weakSelf.viewModel.shouldShowNewMessageView = NO;
+            weakSelf.viewModel.newMessageCount = 0;
+        }
+        [weakSelf.messageScrollView updateTableViewsWithModels:models index:weakSelf.messageScrollView.currentIndex info:nil];
+        [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+        
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        NSLog(@"%@",error);
+        // TODO handle error
+    }];
+}
+
+- (void)requestOtherChannelData {
+    
+    __weak typeof(self) weakSelf = self;
+    for (int i = 1; i < self.viewModel.channelModels.count; i++) {
+        ChannelModel *model = self.viewModel.channelModels[i];
+        [self.viewModel requestDataWithChannelModel:model page:@"0" success:^(ChannelModel *channelModel, NSArray *models) {
+            // 设置初始数据页数
+            [weakSelf.everyChannelPages setObject:@"0" forKey:model.channel_id];
+        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+            NSLog(@"%@",error);
+            // TODO handle error
+        }];
+    }
+}
+
 
 - (void)refreshDataForCurrentChannel {
     // 刷新资讯页当前显示的频道数据
@@ -342,24 +350,11 @@
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         NSLog(@"%@",error);
+        // TODO handle error
         [weakSelf.refreshHeader stopRefreshing];
     }];
 }
 
-
-#pragma mark - UINavigationControllerDelegate
-- (void)navigationController:(UINavigationController *)navigationController didShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
-    if (viewController != self && self.revealViewController.panGestureRecognizer.enabled) {
-        // 禁用侧滑
-        self.revealViewController.panGestureRecognizer.enabled = NO;
-    }
-    // (self.revealViewController.panGestureRecognizer.enabled)添加侧滑
-    if (viewController == self && !self.revealViewController.panGestureRecognizer.enabled) {
-        // 开启侧滑
-        self.revealViewController.panGestureRecognizer.enabled = YES;
-    }
-
-}
 
 #pragma mark - UITableViewDelegate
 - (nullable UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
@@ -391,7 +386,7 @@
     // 设置大表视图和小表视图的相对滑动逻辑
     [self scrollInteractionWithScrollView:scrollView];
     // 设置当大表视图处于下拉状态停止vendor的轮播
-    [self settingAutoScrollingWithContentOffsetY:scrollView.contentOffset.y];
+//    [self settingAutoScrollingWithContentOffsetY:scrollView.contentOffset.y];
 }
 
 #pragma mark - MessageScrollViewDataSource

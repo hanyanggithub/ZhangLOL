@@ -23,7 +23,7 @@
 @property(nonatomic, copy)NSString *last_update;
 @property(nonatomic, copy)NSString *logo;
 // custom
-@property(nonatomic, assign)NSString *type;       // unbook_list0 / book_list1 / recommend_list2 决定分组
+@property(nonatomic, copy)NSString *type;       // unbook_list0 / book_list1 / recommend_list2 决定分组
 @property(nonatomic, copy)NSString *has_next;           // 是否支持加载更多
 
 

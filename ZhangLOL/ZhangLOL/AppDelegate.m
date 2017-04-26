@@ -10,6 +10,7 @@
 #import "LeftViewController.h"
 #import "TabBarController.h"
 #import "LaunchViewController.h"
+#import "LoggerManager.h"
 
 #define LEFT_VIEW_WIDTH (SCREEN_WIDTH * 0.8)
 NSString * const loginSuccessNotificationName = @"LoginSuccessNotificationName";
@@ -22,11 +23,13 @@ NSString * const loginSuccessNotificationName = @"LoginSuccessNotificationName";
 @end
 
 @implementation AppDelegate
+
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // 开启crash监控
+    [LoggerManager monitorException];
+    [LoggerManager upLoadLogIfNeeded];
     // 开启网络状态监控
     [ZhangLOLNetwork startMonitoring];
-    // 下载开机图和启动图
-    [ImageBlur downloadLaunchImageIsForce:NO];
     return YES;
 }
 
@@ -35,6 +38,7 @@ NSString * const loginSuccessNotificationName = @"LoginSuccessNotificationName";
     _window.backgroundColor = [UIColor whiteColor];
     [self installLaunchModules];
     [_window makeKeyAndVisible];
+//    NSString *a = @[][10];
     return YES;
 }
 

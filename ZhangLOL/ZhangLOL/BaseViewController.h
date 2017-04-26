@@ -39,4 +39,7 @@
 // subMethod
 - (void)errorViewTapAction;
 
+// pop 
+- (void)pop;
+
 @end

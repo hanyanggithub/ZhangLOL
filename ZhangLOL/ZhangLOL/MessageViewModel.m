@@ -52,6 +52,7 @@ NSString * const rencommendTableName = @"rencommendTableName";
         NSString *propertyName = [[NSString alloc] initWithUTF8String:property_name];
         [dic setObject:@"name" forKey:propertyName];
     }
+    free(pArray);
     return dic;
 }
 - (BOOL)readDataFromDB {
@@ -303,20 +304,27 @@ NSString * const rencommendTableName = @"rencommendTableName";
     
     NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
     NSString *url = nil;
-    if ([channelModel.chnl_type isEqualToString:@"col"]) {
-        if (page.integerValue != 0) {
-            // 判断是否可以加载更多
-            NSMutableArray *originData = [self.allChannelsModelDic objectForKey:channelModel.channel_id];
-            if (originData) {
+    if (page.integerValue != 0) {
+        // 判断是否可以加载更多
+        NSMutableArray *originData = [self.allChannelsModelDic objectForKey:channelModel.channel_id];
+        if (originData) {
+            if ([channelModel.chnl_type isEqualToString:@"col"]) {
                 NSArray *any = [originData lastObject];
                 SpecialModel *specialModel = [any lastObject];
                 if ([specialModel.has_next isEqualToString:@"0"]) {
                     successHandler(channelModel,nil);
                     return nil;
                 }
+            }else{
+                SmallCellModel *smallCellModel = [originData lastObject];
+                if ([smallCellModel.has_next isEqualToString:@"0"]) {
+                    successHandler(channelModel,nil);
+                    return nil;
+                }
             }
         }
-        
+    }
+    if ([channelModel.chnl_type isEqualToString:@"col"]) {
         // 专题类型
         url = MESSAGE_SPECIAL_PATH;
         [parameters setObject:@"9681" forKey:@"version"];
@@ -366,19 +374,32 @@ NSString * const rencommendTableName = @"rencommendTableName";
             NSMutableArray *data = responseObject[key];
             NSMutableArray *save = [NSMutableArray array];
             for (NSDictionary *dic in data) {
-                SpecialModel *model = [[SpecialModel alloc] initWithDic:dic];
-                model.type = [NSString stringWithFormat:@"%d",i];
-                model.has_next = hasNext;
-                [save addObject:model];
+                SpecialModel *specialModel = [[SpecialModel alloc] initWithDic:dic];
+                specialModel.type = [NSString stringWithFormat:@"%d",i];
+                specialModel.has_next = hasNext;
+                [save addObject:specialModel];
             }
             [arrays addObject:save];
         }
     }else{
         // 其他类型
         NSArray *array = responseObject[@"list"];
+        NSString *next = responseObject[@"next"];
+        if (array.count == 0) {
+            NSMutableArray *originData = [self.allChannelsModelDic objectForKey:model.channel_id];
+            if (originData) {
+                SmallCellModel *smallCellModel = [originData lastObject];
+                smallCellModel.has_next = @"0";
+            }
+        }
         for (NSDictionary *dic in array) {
-            SmallCellModel *model = [[SmallCellModel alloc] initWithDic:dic];
-            [arrays addObject:model];
+            SmallCellModel *smallModel = [[SmallCellModel alloc] initWithDic:dic];
+            if ([next isEqualToString:@"True"]) {
+                smallModel.has_next = @"1";
+            }else{
+                smallModel.has_next = @"0";
+            }
+            [arrays addObject:smallModel];
         }
     }
     return arrays;
@@ -451,7 +472,7 @@ NSString * const rencommendTableName = @"rencommendTableName";
                         }
                     }
                 }else{
-                    // 插入最新数据
+                    // 计算新数据个数
                     SmallCellModel *orgNewetModel = [originData firstObject];
                     for (NSInteger i = array.count -1; i < array.count; i--) {
                         SmallCellModel *everyNewModel = array[i];
@@ -463,17 +484,16 @@ NSString * const rencommendTableName = @"rencommendTableName";
                                 self.shouldShowNewMessageView = YES;
                                 self.newMessageCount++;
                             }
-                            [originData insertObject:everyNewModel atIndex:0];
                         }
+                        [originData replaceObjectAtIndex:i withObject:everyNewModel];
                     }
-                    // 1.替换本地点击过的cellModel
+                    // 标记本地点击过的cellModel
                     originData = [self disposeModels:originData];
                     [self.allChannelsModelDic setObject:originData forKey:model.channel_id];
                 }
                 
             }
 
-            
         }
         
     }

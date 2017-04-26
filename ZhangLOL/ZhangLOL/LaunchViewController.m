@@ -50,10 +50,11 @@ NSString * const userInfoTableName = @"userInfoTableName";
         }
         self.launchImageInfo = @{@"isOriginImage":@(1),@"image":imageLaunch};
     }else{
-        self.launchImageInfo = @{@"isOriginImage":@(0),@"image":imageLogin};
+        if (imageLogin) {
+            self.launchImageInfo = @{@"isOriginImage":@(0),@"image":imageLogin};
+        }
     }
     self.launchImageView.image = imageLaunch;
-    
 }
 
 - (void)judgeLoginState {

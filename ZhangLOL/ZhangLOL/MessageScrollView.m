@@ -12,7 +12,6 @@
 #import "MessgeDetailController.h"
 #import "ImageBrowserController.h"
 #import "ChannelView.h"
-#import "CacheManager.h"
 #import "HoverView.h"
 #import "MessageViewModel.h"
 #import "SmallCellModel.h"
@@ -22,31 +21,13 @@
     NSMutableArray * _reusableTables;
 }
 @property(nonatomic, strong)NSArray *classArray;
-@property(nonatomic, strong)NSMutableArray *tableViews;     // 所有的子视图
+@property(nonatomic, strong)NSMutableArray *tableViews;
 @property(nonatomic, strong)HoverView *suspendView;
 @property(nonatomic, assign)CGPoint priorPoint;
 @property(nonatomic, assign)BOOL isScrolling;
 @end
 
 @implementation MessageScrollView
-
-- (HoverView *)suspendView {
-    if (_suspendView == nil) {
-        _suspendView = [[HoverView alloc] initWithFrame:CGRectMake(0, 0, self.width, HOVER_VIEW_HEIGHT)];
-        NSArray *array = [NSArray arrayWithObjects:self.viewModel.channelModels[2],self.viewModel.channelModels[3], nil];
-        [_suspendView updateWithModels:array];
-        _suspendView.hidden = YES;
-        [self addSubview:_suspendView];
-    }
-    return _suspendView;
-}
-
-- (NSMutableArray *)reusableTables {
-    if (_reusableTables == nil) {
-        _reusableTables = [NSMutableArray array];
-    }
-    return _reusableTables;
-}
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -65,6 +46,12 @@
         _currentIndex = currentIndex;
     }
 }
+- (void)setAllChannelCount:(NSInteger)allChannelCount {
+    if (_allChannelCount != allChannelCount) {
+        _allChannelCount = allChannelCount;
+        self.contentSize = CGSizeMake(self.width * allChannelCount, self.height);
+    }
+}
 - (NSArray *)classArray {
     if (_classArray == nil) {
         _classArray = [NSArray arrayWithObjects:[NewestTableView class],[SpecialTableView class], nil];
@@ -77,16 +64,29 @@
     }
     return _tableViews;
 }
+- (HoverView *)suspendView {
+    if (_suspendView == nil) {
+        _suspendView = [[HoverView alloc] initWithFrame:CGRectMake(0, 0, self.width, HOVER_VIEW_HEIGHT)];
+        NSArray *array = [NSArray arrayWithObjects:self.viewModel.channelModels[2],self.viewModel.channelModels[3], nil];
+        [_suspendView updateWithModels:array];
+        _suspendView.hidden = YES;
+        [self addSubview:_suspendView];
+    }
+    return _suspendView;
+}
+- (NSMutableArray *)reusableTables {
+    if (_reusableTables == nil) {
+        _reusableTables = [NSMutableArray array];
+    }
+    return _reusableTables;
+}
+
 - (UITableView *)currentTableView {
     if (self.currentIndex < self.tableViews.count) {
         return self.tableViews[self.currentIndex];
     }else{
         return nil;
     }
-}
-- (void)setAllChannelCount:(NSInteger)allChannelCount {
-    _allChannelCount = allChannelCount;
-    self.contentSize = CGSizeMake(self.width * allChannelCount, self.height);
 }
 
 - (void)createFirstTwoTableViews {
@@ -153,7 +153,6 @@
                self.suspendView.hidden = NO;
             }
         }
-        
     }
 }
 
@@ -163,15 +162,13 @@
     if (tableView == scrollView) {
         // 每当滑动到距离最下0.5倍tableView.height时静默加载更多
         NSNumber *isLoadingMore = [self.viewController valueForKey:@"isLoadingMore"];
-        BOOL isLoading =  isLoadingMore.boolValue;
-        if (tableView.contentSize.height - tableView.contentOffset.y - tableView.height <= tableView.height *0.5 && !isLoading) {
+        BOOL isLoading = isLoadingMore.boolValue;
+        if (tableView.contentSize.height - tableView.contentOffset.y - tableView.height <= tableView.height * 0.5 && !isLoading) {
             if ([self.dataSource respondsToSelector:@selector(messageScrollViewSubTableViewShouldLoadMoreDataWithIndex:)]) {
                 [self.dataSource messageScrollViewSubTableViewShouldLoadMoreDataWithIndex:self.currentIndex];
             }
         }
-
     }
-    
 }
 #pragma mark - 根据当前表视图显示和滑动方向清除内存缓存逻辑
 - (void)disposeCleanMemoryImageWithScrollView:(UIScrollView *)scrollView {
@@ -260,11 +257,9 @@
 - (void)dealReusableTablesView:(NSInteger)index {
  
     for (UITableView *tableView in self.tableViews) {
-        
         if ([tableView isKindOfClass:[NewestTableView class]]) {
             
             NSInteger tbIndex = [self.tableViews indexOfObject:tableView];
-            
             // remove
             if (tbIndex == index && [self.reusableTables containsObject:tableView]) {
                 [self.reusableTables removeObject:tableView];
@@ -281,13 +276,14 @@
 #pragma mark - 子视图切换时将上一个显示的表视图contentOffset.x至为0
 - (void)resetSubPriorTableViewContentOffset {
     NSInteger index = self.contentOffset.x / self.width;
-    if (self.currentIndex != index) {
+    if (index < self.tableViews.count && self.currentIndex != index) {
         UITableView *priorTableView = self.tableViews[self.currentIndex];
         priorTableView.contentOffset = CGPointMake(0, 0);
+        self.currentIndex = index;
+        [self dealReusableTablesView:index];
+        [self.refreshFooterView setOtherScrollView:self.tableViews[self.currentIndex]];
     }
-    self.currentIndex = index;
-    [self dealReusableTablesView:index];
-    [self.refreshFooterView setOtherScrollView:self.tableViews[self.currentIndex]];
+    
     if ([self.scrollDelegate respondsToSelector:@selector(messageScrollViewScrolledIndex:)]) {
         [self.scrollDelegate messageScrollViewScrolledIndex:index];
     }

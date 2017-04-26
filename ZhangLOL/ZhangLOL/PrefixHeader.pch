@@ -27,6 +27,7 @@
 #import "ImageBlur.h"
 #import "DBManager.h"
 #import "Encrypt.h"
+#import "CacheManager.h"
 #import "UIView+Extension.h"
 #import "UIScrollView+Extension.h"
 #import "UIColor+Extension.h"
@@ -50,6 +51,6 @@
 #define USER_DEFAULTS  [NSUserDefaults standardUserDefaults]
 #define APP_DELEGATE     ((AppDelegate *)[UIApplication sharedApplication].delegate)
 #define SYSTEM_VERSION  ([[UIDevice currentDevice] systemVersion].floatValue)
-
+#define IMAGE_DISK_CACHE_PATH  [NSString stringWithFormat:@"%@/Library/Caches/ImageCache/",NSHomeDirectory()]
 
 #endif /* PrefixHeader_pch */

@@ -56,6 +56,8 @@
 		04EDE0461E96692800A07768 /* MessgeDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EDE0451E96692800A07768 /* MessgeDetailController.m */; };
 		04EDE0491E9687B900A07768 /* RefreshHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EDE0481E9687B900A07768 /* RefreshHeaderView.m */; };
 		04EDE04C1E96944C00A07768 /* UIScrollView+Extension.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EDE04B1E96944C00A07768 /* UIScrollView+Extension.m */; };
+		04F023031EB1277A007BAB66 /* Logger.m in Sources */ = {isa = PBXBuildFile; fileRef = 04F023021EB1277A007BAB66 /* Logger.m */; };
+		04F023081EB13AE5007BAB66 /* LoggerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 04F023071EB13AE5007BAB66 /* LoggerManager.m */; };
 		04F0C8941EA53C4A00843B64 /* AtlasCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04F0C8931EA53C4A00843B64 /* AtlasCell.m */; };
 		04F0C8971EA5435800843B64 /* ClubCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04F0C8961EA5435800843B64 /* ClubCell.m */; };
 		04F0C89A1EA545C100843B64 /* NewestBaseCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 04F0C8991EA545C100843B64 /* NewestBaseCell.m */; };
@@ -176,6 +178,10 @@
 		04EDE0481E9687B900A07768 /* RefreshHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RefreshHeaderView.m; sourceTree = "<group>"; };
 		04EDE04A1E96944C00A07768 /* UIScrollView+Extension.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+Extension.h"; sourceTree = "<group>"; };
 		04EDE04B1E96944C00A07768 /* UIScrollView+Extension.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+Extension.m"; sourceTree = "<group>"; };
+		04F023011EB1277A007BAB66 /* Logger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Logger.h; sourceTree = "<group>"; };
+		04F023021EB1277A007BAB66 /* Logger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Logger.m; sourceTree = "<group>"; };
+		04F023061EB13AE5007BAB66 /* LoggerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoggerManager.h; sourceTree = "<group>"; };
+		04F023071EB13AE5007BAB66 /* LoggerManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoggerManager.m; sourceTree = "<group>"; };
 		04F0C8921EA53C4A00843B64 /* AtlasCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AtlasCell.h; sourceTree = "<group>"; };
 		04F0C8931EA53C4A00843B64 /* AtlasCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AtlasCell.m; sourceTree = "<group>"; };
 		04F0C8951EA5435800843B64 /* ClubCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClubCell.h; sourceTree = "<group>"; };
@@ -246,6 +252,7 @@
 				04EDE03C1E9603D000A07768 /* base */,
 				04EDE03D1E96040400A07768 /* tool */,
 				04FCD3C21EA18EC90087722C /* third */,
+				04F023001EB126D8007BAB66 /* log collection */,
 				04BCE6041E9A0AC700182753 /* config */,
 				041AF2491EA393EC00C1BAB7 /* resource file */,
 			);
@@ -506,6 +513,17 @@
 			name = tool;
 			sourceTree = "<group>";
 		};
+		04F023001EB126D8007BAB66 /* log collection */ = {
+			isa = PBXGroup;
+			children = (
+				04F023011EB1277A007BAB66 /* Logger.h */,
+				04F023021EB1277A007BAB66 /* Logger.m */,
+				04F023061EB13AE5007BAB66 /* LoggerManager.h */,
+				04F023071EB13AE5007BAB66 /* LoggerManager.m */,
+			);
+			name = "log collection";
+			sourceTree = "<group>";
+		};
 		04F0C89B1EA54CBB00843B64 /* surface */ = {
 			isa = PBXGroup;
 			children = (
@@ -724,6 +742,7 @@
 				04EDE0491E9687B900A07768 /* RefreshHeaderView.m in Sources */,
 				040CF9F31E92DC3F00B003D5 /* RecommendView.m in Sources */,
 				04F0C8971EA5435800843B64 /* ClubCell.m in Sources */,
+				04F023081EB13AE5007BAB66 /* LoggerManager.m in Sources */,
 				04F8C2161E9CC954009F2A8B /* CacheManager.m in Sources */,
 				04414A101E94EE690079D027 /* MessageScrollView.m in Sources */,
 				04BCE60B1E9A3F9A00182753 /* ImageBlur.m in Sources */,
@@ -755,6 +774,7 @@
 				0405D66A1E98C667002D1622 /* SpecialGenericCell.m in Sources */,
 				04EC0BB71EAA9B0000803E0F /* SettingViewController.m in Sources */,
 				04F0CA031EA58C1E00843B64 /* SGPhotoViewController.m in Sources */,
+				04F023031EB1277A007BAB66 /* Logger.m in Sources */,
 				040CF9DA1E925B1C00B003D5 /* ZhangLOLNetwork.m in Sources */,
 				04F0CA021EA58C1E00843B64 /* SGPhotoView.m in Sources */,
 				04EDE0381E95FF5400A07768 /* SmallCell.m in Sources */,

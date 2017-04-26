@@ -8,11 +8,14 @@
 
 #import "BaseViewController.h"
 
-@interface BaseViewController ()
+@interface BaseViewController ()<UINavigationControllerDelegate>
 @property(nonatomic, strong)UIButton *menuButton;
 @property(nonatomic, strong)UIView *unLoginView;
 @property(nonatomic, strong)UILabel *unDevelopLabel;
 @property(nonatomic, strong)UIView *errorView;
+@property(nonatomic, strong)UIView *shadeView;
+@property(nonatomic, weak)UIView *priorVCShadeView;
+@property(nonatomic, weak)UIView *tabBarVCShadeView;
 @end
 
 @implementation BaseViewController
@@ -24,7 +27,6 @@
     self = [super init];
     if (self) {
         self.hidesBottomBarWhenPushed = YES;
-    
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loginSuccess:) name:loginSuccessNotificationName object:nil];
         extern NSString * const logoutNotificationName;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logoutSuccess) name:logoutNotificationName object:nil];
@@ -59,14 +61,89 @@
         // 全屏滑动返回
         __weak id systemTarget = self.navigationController.interactivePopGestureRecognizer.delegate;
         UIPanGestureRecognizer *popPan = [[UIPanGestureRecognizer alloc] initWithTarget:systemTarget action:NSSelectorFromString(@"handleNavigationTransition:")];
+        [popPan addTarget:self action:@selector(handlePanGestureRecognizer:)];
         [self.view addGestureRecognizer:popPan];
         self.navigationController.interactivePopGestureRecognizer.enabled = NO;
     }
 }
 
+- (void)handlePanGestureRecognizer:(UIPanGestureRecognizer *)panGesture {
+    CGPoint displacement = [panGesture translationInView:panGesture.view];
+    CGFloat offset_x = displacement.x;
+    
+    if (panGesture.state == UIGestureRecognizerStateBegan) {
+        // 手势开始获取栈顶控制器视图的遮罩视图和标签栏遮罩视图
+        NSLog(@"%f",[panGesture velocityInView:panGesture.view].x);
+        BaseViewController *priorVC = (BaseViewController *)[self.navigationController topViewController];
+        self.priorVCShadeView = priorVC.shadeView;
+        self.tabBarVCShadeView = [self.tabBarController valueForKey:@"shadeView"];
+        if (self.priorVCShadeView) {
+            self.priorVCShadeView.hidden = NO;
+        }
+        if (self.tabBarVCShadeView) {
+            self.tabBarVCShadeView.hidden = NO;
+        }
+    }else if (panGesture.state == UIGestureRecognizerStateChanged) {
+        
+        CGFloat alpha = 1 - offset_x / self.view.width;
+        if (self.priorVCShadeView) {
+            self.priorVCShadeView.alpha = alpha;
+        }
+        if (self.tabBarVCShadeView) {
+            self.tabBarVCShadeView.alpha = alpha;
+        }
+    }else{
+        if (offset_x > self.view.width * 0.5) {
+            if (self.priorVCShadeView) {
+                self.priorVCShadeView.hidden = YES;
+            }
+            if (self.tabBarVCShadeView) {
+                self.tabBarVCShadeView.hidden = YES;
+            }
+        }else{
+            CGFloat velocity_x = [panGesture velocityInView:panGesture.view].x;
+            if (velocity_x > 500) {
+                if (self.priorVCShadeView) {
+                    self.priorVCShadeView.hidden = YES;
+                }
+                if (self.tabBarVCShadeView) {
+                    self.tabBarVCShadeView.hidden = YES;
+                }
+            }
+        }
+    }
+}
+#pragma mark - UINavigationControllerDelegate
+- (void)navigationController:(UINavigationController *)navigationController didShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    if (viewController != self && self.revealViewController.panGestureRecognizer.enabled) {
+        // 禁用侧滑
+        self.revealViewController.panGestureRecognizer.enabled = NO;
+    }
+    // (self.revealViewController.panGestureRecognizer.enabled)添加侧滑
+    if (viewController == self && !self.revealViewController.panGestureRecognizer.enabled) {
+        // 开启侧滑
+        self.revealViewController.panGestureRecognizer.enabled = YES;
+    }
+    
+    if (self.priorVCShadeView) {
+        self.priorVCShadeView.hidden = YES;
+    }
+    if (self.tabBarVCShadeView) {
+        self.tabBarVCShadeView.hidden = YES;
+    }
+    
+}
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self.view addSubview:self.shadeView];
+}
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
+    self.shadeView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)];
+    self.shadeView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.5];
+    self.shadeView.userInteractionEnabled = NO;
+    self.shadeView.hidden = YES;
     // 初始化登录态
     NSDictionary *userInfo = APP_DELEGATE.userInfo;
     if (userInfo) {
@@ -76,8 +153,9 @@
     }
     
     // 导航栏处理
-    if (self.navigationController.navigationBar) {
+    if (self.navigationController) {
         // 设置状态栏字体
+        self.navigationController.delegate = self;
         [self.navigationController.navigationBar setBarStyle:UIBarStyleBlack];
         self.navigationController.navigationBar.hidden = YES;
         // 自定义导航栏
@@ -140,6 +218,15 @@
     }
 }
 - (void)pop {
+    NSUInteger index = [self.navigationController.viewControllers indexOfObject:self];
+    BaseViewController *priorVC = [self.navigationController.viewControllers objectAtIndex:index - 1];
+    if (!priorVC.shadeView.hidden) {
+        priorVC.shadeView.hidden = YES;
+    }
+    UIView *tabShadeView = [self.tabBarController valueForKey:@"shadeView"];
+    if (!tabShadeView.hidden) {
+        tabShadeView.hidden = YES;
+    }
     [self.navigationController popViewControllerAnimated:YES];
 }
 

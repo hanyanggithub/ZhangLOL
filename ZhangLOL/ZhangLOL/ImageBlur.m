@@ -118,7 +118,11 @@
     BOOL launchImageExist = [fileManager fileExistsAtPath:launchImagePath];
     if (launchImageExist) {
         if (force) {
-            [self requestLaunchImage];
+            NSError *error = nil;
+            [fileManager removeItemAtPath:launchImagePath error:&error];
+            if (error == nil) {
+                [self requestLaunchImage];
+            }
         }
     }else{
         [self requestLaunchImage];
@@ -129,7 +133,11 @@
     BOOL loginImageExist = [fileManager fileExistsAtPath:loginImagePath];
     if (loginImageExist) {
         if (force) {
-            [self requestLoginImage];
+            NSError *error = nil;
+            [fileManager removeItemAtPath:loginImagePath error:&error];
+            if (error == nil) {
+                [self requestLoginImage];
+            }
         }
     }else{
         [self requestLoginImage];

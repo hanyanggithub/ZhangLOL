@@ -10,9 +10,7 @@
 
 @interface RecommendPageControll : UIView
 
-@property(nonatomic, assign)NSInteger pages;
-@property(nonatomic, assign)NSInteger currentPage;
-
-- (void)setIndex:(NSInteger)index;
+@property(nonatomic, assign)NSUInteger pages;        // 页数
+@property(nonatomic, assign)NSUInteger currentIndex; // 索引位置
 
 @end

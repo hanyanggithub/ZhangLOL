@@ -27,7 +27,14 @@
 /**
  清空当前沙盒中的图片缓存
  */
-+ (void)cleanAllImageCacheFromDisk;
++ (void)cleanAllImageCacheFromDiskWithCompletion:(void(^)())block;
 
+
+/**
+ 异步计算沙盒中图片缓存大小
+
+ @param block 回调
+ */
++ (void)calculateDiskCacheSizeWithCompletionBlock:(void(^)(NSUInteger imageCount, NSUInteger size))block;
 
 @end

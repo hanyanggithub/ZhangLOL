@@ -19,7 +19,7 @@
 @property(nonatomic, strong)NSMutableArray<UIImageView *> *imagesViews;
 @property(nonatomic, strong)NSTimer *timer;
 @property(nonatomic, assign)NSInteger currentIndex;
-@property(nonatomic, assign)BOOL isScrolling;
+@property(nonatomic, assign)BOOL isAutoScrolling;
 
 @end
 
@@ -48,18 +48,24 @@
 
 - (NSTimer *)timer {
     if (_timer == nil) {
-        __weak typeof(self) weakSelf = self;
+        // 多线程创建定时器
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            _timer = [NSTimer scheduledTimerWithTimeInterval:3 target:weakSelf selector:@selector(timerAction) userInfo:nil repeats:YES];
+            _timer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(timerAction) userInfo:nil repeats:YES];
             [[NSRunLoop currentRunLoop] run];
         });
     }
     return _timer;
 }
 
-- (void)changeScrollViewContentWithModels:(NSArray *)models {
-    
+// 轮播实现方式有很多，这里采用n+2基于scrollView的实现方式
+- (void)updateWithModels:(NSArray *)models {
+    if (models == nil || models.count == 0) {
+        return;
+    }
+    // 关闭自动轮播
+    [self stopAutoScrolling];
     if (self.models == nil) {
+        // 首次创建子视图
         self.scrollView.contentSize = CGSizeMake(self.scrollView.width * (models.count + 2), self.scrollView.height);
         for (int i = 0; i < models.count + 2; i++) {
             UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(self.scrollView.width * i, 0, self.scrollView.width, self.scrollView.height)];
@@ -70,53 +76,39 @@
             [self.imagesViews addObject:imageView];
             
         }
-        [self startAutoScrolling];
+        self.pageControll = [[RecommendPageControll alloc] initWithFrame:CGRectZero];
+        self.pageControll.frame = CGRectMake(0, 0, models.count * PAGR_CONTROLL_HEIGHT, PAGR_CONTROLL_HEIGHT);
+        self.pageControll.center = CGPointMake(self.center.x, 0);
+        self.pageControll.bottom = self.bottom - 5;
+        [self addSubview:self.pageControll];
+
     }else{
-        [self stopAutoScrolling];
-        NSInteger count = self.models.count - models.count;
-        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width - self.scrollView.width * count, self.scrollView.height);
+        // 更新数量
+        NSInteger count = models.count - self.models.count;
+        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width + self.scrollView.width * count, self.scrollView.height);
         for (int i = 0; i < ABS(count); i++) {
             if (count > 0) {
-                // 移除
-                UIImageView *subview = self.imagesViews[models.count + i];
-                [subview removeSubviews];
-                [self.imagesViews removeObject:subview];
-                
-            }else{
                 // 添加
-                UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(self.scrollView.width * (self.models.count + i), 0, self.scrollView.width, self.scrollView.height)];
+                UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(self.scrollView.width * (self.models.count + 2 + i), 0, self.scrollView.width, self.scrollView.height)];
                 imageView.userInteractionEnabled = YES;
                 UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapImageViewAction:)];
                 [imageView addGestureRecognizer:tap];
                 [self.scrollView addSubview:imageView];
                 [self.imagesViews addObject:imageView];
+                
+            }else if (count < 0){
+                // 移除
+                UIImageView *subview = self.imagesViews[models.count + 2 + i];
+                [subview removeFromSuperview];
+                [self.imagesViews removeObject:subview];
             }
             
         }
-        [self startAutoScrolling];
     }
-    if (self.pageControll != nil) {
-        [self.pageControll removeSubviews];
-        self.pageControll = nil;
-    }
-    
-    self.pageControll = [[RecommendPageControll alloc] initWithFrame:CGRectZero];
-    [self addSubview:self.pageControll];
-    self.pageControll.frame = CGRectMake(0, 0, models.count * PAGR_CONTROLL_HEIGHT, PAGR_CONTROLL_HEIGHT);
-    self.pageControll.center = CGPointMake(self.center.x, 0);
-    self.pageControll.bottom = self.bottom - 5;
-    [self.pageControll setPages:models.count];
-    
-}
+    // 设置页数
+    self.pageControll.pages = models.count;
 
-
-- (void)updateWithModels:(NSArray *)models {
-    
-    if (self.models.count != models.count) {
-        [self changeScrollViewContentWithModels:models];
-    }
-
-    // 轮播实现方式有很多，这里采用n+2基于scrollView的实现方式
+    // 赋值数据
     NSMutableArray *array = [NSMutableArray array];
     id first = [models firstObject];
     id last = [models lastObject];
@@ -128,16 +120,26 @@
         UIImageView *imageView = self.imagesViews[i];
         [imageView sd_setImageWithURL:[NSURL URLWithString:model.image_url_big] placeholderImage:[UIImage imageNamed:@"hero_detail_head_default"] options:SDWebImageRetryFailed|SDWebImageProgressiveDownload];
     }
+    
+    // 设置成初始状态
     self.scrollView.contentOffset = CGPointMake(self.scrollView.width, 0);
-    [self.pageControll setIndex:0];
+    self.pageControll.currentIndex = 0;
     self.currentIndex = 0;
+    
+    // 保存模型数组
     self.models = models;
+    
+    // 开启自动轮播
+    [self startAutoScrolling];
 }
 
 - (UIImage *)getCurrentShowImage {
+    UIImageView *imageView = self.imagesViews[self.currentIndex + 1];
     RencommendModel *model = self.models[self.currentIndex];
-    UIImage *image = nil;
-    image = [[SDImageCache sharedImageCache] imageFromMemoryCacheForKey:model.image_url_big];
+    UIImage *image = imageView.image;
+    if (image == nil) {
+        image = [[SDImageCache sharedImageCache] imageFromMemoryCacheForKey:model.image_url_big];
+    }
     if (image == nil) {
         image = [[SDImageCache sharedImageCache] imageFromDiskCacheForKey:model.image_url_big];
     }
@@ -162,7 +164,8 @@
     [self.viewController.navigationController pushViewController:detail animated:YES];
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    if (scrollView.isDragging) {
+    // 用户正在交互中
+    if (scrollView.panGestureRecognizer.state != UIGestureRecognizerStatePossible) {
         [self stopAutoScrolling];
     }
     NSInteger page = self.scrollView.contentOffset.x / self.scrollView.width;
@@ -188,35 +191,43 @@
             self.currentIndex = self.models.count - 1;
         }
     }
-    [self.pageControll setIndex:self.currentIndex];
+    // 设置PageCotroll的显示页
+    self.pageControll.currentIndex = self.currentIndex;
     
-    // 最大位置
+    // 最大位置时滑到scrollView.width
     if (scrollView.contentOffset.x >= scrollView.width * (self.imagesViews.count - 1)) {
         scrollView.contentOffset = CGPointMake(scrollView.width, 0);
     }
-    // 最小位置
+    // 最小位置滑动scrollView.width * (self.imagesViews.count - 2)
     if (scrollView.contentOffset.x <= 0) {
         scrollView.contentOffset = CGPointMake(scrollView.width * (self.imagesViews.count - 2), 0);
     }
     
 }
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    // 开启自动滑动
     [self startAutoScrolling];
 }
 
 - (void)timerAction {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.window) {
+        if (self.superview) {
             [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x + self.scrollView.width, 0) animated:YES];
         }
     });
 }
 
 - (void)startAutoScrolling {
-    self.timer.fireDate = [NSDate dateWithTimeIntervalSinceNow:3];
+    if (!self.isAutoScrolling) {
+        self.isAutoScrolling = YES;
+        self.timer.fireDate = [NSDate dateWithTimeIntervalSinceNow:3];
+    }
 }
 - (void)stopAutoScrolling {
-    self.timer.fireDate = [NSDate distantFuture];
+    if (self.isAutoScrolling) {
+        self.isAutoScrolling = NO;
+        self.timer.fireDate = [NSDate distantFuture];
+    }
 }
 
 - (void)dealloc {

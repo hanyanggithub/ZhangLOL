@@ -115,10 +115,10 @@
     if (self.inputView.editing) {
         [self.inputView resignFirstResponder];;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self.navigationController popViewControllerAnimated:YES];
+            [super pop];
         });
     }else{
-        [self.navigationController popViewControllerAnimated:YES];
+        [super pop];
     }
     
 }
@@ -205,6 +205,7 @@
     }
 }
 - (void)searchAction {
+
     NSMutableDictionary *searchParameters = [NSMutableDictionary dictionary];
     [searchParameters setObject:@"0" forKey:@"page"];
     [searchParameters setObject:@"10" forKey:@"num"];
@@ -229,11 +230,10 @@
                 
                 if (self.models.count > 0) {
                     [self removeErrorView];
-                    [self.contentView reloadData];
-                    
                 }else{
                     [self showErrorViewWithMessage:@"没有找到搜索对象"];
                 }
+                [self.contentView reloadData];
             }
             [self.refreshHeaderView stopRefreshing];
         } failure:^(NSURLSessionDataTask *task, NSError *error) {

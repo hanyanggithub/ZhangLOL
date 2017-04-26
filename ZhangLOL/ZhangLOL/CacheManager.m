@@ -14,6 +14,8 @@
 
 + (void)defaultSettingSDImageCache {
     SDImageCache *cache = [SDImageCache sharedImageCache];
+    // 设置沙盒路径
+    [cache makeDiskCachePath:IMAGE_DISK_CACHE_PATH];
     cache.maxMemoryCountLimit = 50;
 }
 
@@ -73,8 +75,17 @@
         }
     }
 }
-+ (void)cleanAllImageCacheFromDisk {
++ (void)cleanAllImageCacheFromDiskWithCompletion:(void(^)())block {
     SDImageCache *cache = [SDImageCache sharedImageCache];
-    [cache clearDiskOnCompletion:nil];
+    [cache clearDiskOnCompletion:^{
+        block();
+    }];
 }
++ (void)calculateDiskCacheSizeWithCompletionBlock:(void(^)(NSUInteger imageCount, NSUInteger size))block {
+    SDImageCache *cache = [SDImageCache sharedImageCache];
+    [cache calculateSizeWithCompletionBlock:^(NSUInteger fileCount, NSUInteger totalSize) {
+        block(fileCount,totalSize);
+    }];
+}
+
 @end

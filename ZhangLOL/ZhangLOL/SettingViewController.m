@@ -26,11 +26,20 @@ NSString * const logoutNotificationName = @"LogoutNotificationName";
     self.enableFullScreenPop = YES;
     self.customNaviItem.title = @"设置";
     [self.customNaviBar setBackgroundImage:[UIImage imageNamed:@"nav_bar_bg_for_seven"] forBarMetrics:UIBarMetricsDefault];
-    NSArray *section1 = @[@{@"leftTitle":@"省流量",@"rightTitle":@"资讯图片自动下载设置",@"isArrow":@"1"},@{@"leftTitle":@"清空缓存",@"rightTitle":@"20MB",@"isArrow":@"1"}];
+    
+    NSMutableDictionary *cacheData = [NSMutableDictionary dictionaryWithObjects:@[@"清空缓存",@"20MB",@"1"] forKeys:@[@"leftTitle",@"rightTitle",@"isArrow"]];
+    NSArray *section1 = @[@{@"leftTitle":@"省流量",@"rightTitle":@"资讯图片自动下载设置",@"isArrow":@"1"},cacheData];
     NSArray *section2 = @[@{@"leftTitle":@"关于掌盟",@"rightTip":@"1",@"isArrow":@"1"},@{@"leftTitle":@"意见反馈",@"rightTitle":@"官方反馈QQ群:385410609",@"isArrow":@"1"}];
     self.dataList = @[section1,section2];
     [self createSubviews];
+    // 计算图片缓存
+    [CacheManager calculateDiskCacheSizeWithCompletionBlock:^(NSUInteger imageCount, NSUInteger size) {
+        NSString *cacheText = [NSString stringWithFormat:@"%.2fM",(CGFloat)(size / 1024 / 1024)];
+        [cacheData setObject:cacheText forKey:@"rightTitle"];
+        [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:1 inSection:0]] withRowAnimation:UITableViewRowAnimationFade];
+    }];
 }
+
 - (void)createSubviews {
     self.tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, NAVI_STATUS_BAR_HEIGHT, self.view.width, self.view.height - NAVI_STATUS_BAR_HEIGHT) style:UITableViewStyleGrouped];
     self.tableView.delegate = self;
@@ -128,6 +137,16 @@ NSString * const logoutNotificationName = @"LogoutNotificationName";
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if (indexPath.section == 0 && indexPath.row == 1) {
+        [CacheManager cleanAllImageCacheFromDiskWithCompletion:^{
+            NSArray *array2d = [self.dataList firstObject];
+            NSMutableDictionary *dic = [array2d lastObject];
+            [dic setObject:@"0M" forKey:@"rightTitle"];
+            [tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            [SVProgressHUD showSuccessWithStatus:@"清除成功"];
+        }];
+    }
+    
 }
 
 #pragma mark - TencentLoginDelegate

@@ -59,6 +59,7 @@
             [dic setObject:result forKey:propertyName];
         }
     }
+    free(pArray);
     return dic;
 }
 @end
